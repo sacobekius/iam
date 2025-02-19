@@ -19,7 +19,7 @@ from django.urls import include, path
 from oauth2_provider import urls as oauth2_urls
 from oauth2_provider.views import ConnectDiscoveryInfoView, RPInitiatedLogoutView
 
-from users.views import LoginView
+from users.views import LoginView, tstuserinfo
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -28,4 +28,5 @@ urlpatterns = [
     path("o/authorize/v2.0/.well-known/openid-configuration/", ConnectDiscoveryInfoView.as_view(), name="oidc-connect-discovery-info"),
     path("o/authorize/oauth2/v2.0/logout/", RPInitiatedLogoutView.as_view(), name="rp-initiated-logout"),
     path('testusers/login/', LoginView.as_view(), name="testlogin"),
+    path('tst/userinfo', tstuserinfo, name='tstuserinfo'),
 ]

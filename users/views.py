@@ -1,9 +1,19 @@
-from django.http import HttpResponseNotFound, HttpResponseRedirect
+from django.http import HttpResponseNotFound, HttpResponseRedirect, JsonResponse
 from django.contrib.auth import logout, login
 from django.shortcuts import render, reverse
 from django.views import View
 
 from users.models import User
+
+def tstuserinfo(request):
+    print('Userinfo test')
+    print(request.headers.get('Authorization'))
+    rsp = {
+        'givenName': 'Hello world',
+        'surname': 'world',
+        'header': request.headers.get('Authorization'),
+    }
+    return JsonResponse(rsp)
 
 class LoginView(View):
 
