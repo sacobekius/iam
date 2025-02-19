@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <h2>
+        Testaccounts
+    </h2>
+    <table>
+        {% for user in usergrouplist %}
+        <tr>
+        <td>
+            {{ user.username }}
+        </td>
+        <td>
+            {{ user.groups }}
+        </td>
+        <td>
+            <form method="post" id="testlogin" action="{% url 'testlogin' %}">
+                {% csrf_token %}
+                <input type="hidden" name="next" value={{ next }}>
+                <input type="hidden" name="userid" value={{ user.userid }}>
+                <button class="gwknop" type="submit" form="testlogin" name="event" value="login">Login</button>
+            </form>
+        </td>
+        </tr>
+        {% endfor %}
+    </table>
+
+{% endblock %}

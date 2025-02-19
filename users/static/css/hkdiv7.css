@@ -1,0 +1,89 @@
+body {
+    background-image: url("/static/images/websiteachtergrond.jpg");
+    background-position: center center;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+    background-size: cover;
+    background-color: #464646;
+    height: 100vh;
+    width: 100vw;
+
+}
+
+#content, #contentbreed, .overpakketen {
+    font-family: 'Titillium Web', sans-serif;
+    color: #000000;
+    background: #ffffff;
+    background: rgba(255, 255, 255, 0.9);
+    word-wrap: break-word;
+    padding: 5px;
+    border-radius: 5px;
+}
+
+a:-webkit-any-link {
+    text-decoration: overline;
+    color: #7d9262;
+}
+
+a:link {
+    text-decoration: none;
+    font-weight: bold;
+    color: #7d9262;
+}
+
+a:hover, a:visited:hover {
+    text-decoration: none;
+    color: #fba500;
+}
+
+a:visited {
+    text-decoration: none;
+    color: #7d9262;
+}
+
+table, input {
+    width: 100%;
+    border-spacing: 3px;
+    border-collapse: separate;
+}
+th {
+    text-align: left;
+    background-color: #fba500;
+}
+th, td, input {
+    padding: 3px;
+    border-radius: 3px;
+}
+tr:nth-child(even) {
+    background-color: #fba500;
+}
+tr:nth-child(odd) {
+    background-color: #fcca7c;
+}
+
+.knop {
+    width: 100%;
+    background-color: #fcca7c;
+    -webkit-appearance: none;
+    border-radius: 6px;
+    border-color: #fba500;
+    border-width: 6px;
+    color: black;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    cursor: pointer;
+}
+
+.gwknop {
+    background-color: #B0C15C;
+    -webkit-appearance: none;
+    border-radius: 1px;
+    border-color: lightslategray;
+    border-width: 1px;
+    color: black;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    cursor: pointer;
+}

@@ -1,0 +1,29 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <title>IAM voor testen</title>
+    <meta name="MobileOptimized" content="width">
+    <meta name="HandheldFriendly" content="true">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link type="text/css" rel="stylesheet" href="https://fonts.googleapis.com/css?family=Titillium+Web" media="all" />
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script nomodule src="https://cdn.jsdelivr.net/npm/friendly-challenge@0.9.13/widget.min.js" async defer></script>
+    <link rel="stylesheet" type="text/css" href="{% static 'css/normalize.css' %}">
+    <link rel="stylesheet" type="text/css" href="{% static 'css/hkdiv7.css' %}">
+    <link rel="stylesheet" type="text/css" href="{% static 'css/responsive6.css' %}">
+
+</head>
+<body>
+
+<div id="content-container">
+   <div id="content">
+                {% block content %}
+                    if you see this, something is wrong!
+                {% endblock content %}
+    </div>
+</div>
+
+</body>
+</html>
