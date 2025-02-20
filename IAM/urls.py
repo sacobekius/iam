@@ -19,7 +19,7 @@ from django.urls import include, path
 from oauth2_provider import urls as oauth2_urls
 from oauth2_provider.views import ConnectDiscoveryInfoView, RPInitiatedLogoutView
 
-from users.views import LoginView, tstuserinfo
+from users.views import LoginView
 
 urlpatterns = [
     path('admin/', admin.site.urls),
