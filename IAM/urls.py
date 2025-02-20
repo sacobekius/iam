@@ -32,5 +32,4 @@ urlpatterns = [
 
     path("o/authorize/oauth2/v2.0/logout/", RPInitiatedLogoutView.as_view(), name="rp-initiated-logout"),
     path('testusers/login/', LoginView.as_view(), name="testlogin"),
-    path('tst/userinfo', tstuserinfo, name='tstuserinfo'),
 ]
