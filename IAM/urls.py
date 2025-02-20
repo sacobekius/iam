@@ -25,7 +25,11 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('o/', include(oauth2_urls)),
     # fix
-    path("o/authorize/v2.0/.well-known/openid-configuration/", ConnectDiscoveryInfoView.as_view(), name="oidc-connect-discovery-info"),
+    path("o/authorize/v2.0/.well-known/openid-configuration/", ConnectDiscoveryInfoView.as_view(),
+         name="oidc-connect-discovery-info"),
+    path("o/authorize/.well-known/openid-configuration/", ConnectDiscoveryInfoView.as_view(),
+         name="oidc-connect-discovery-info"),
+
     path("o/authorize/oauth2/v2.0/logout/", RPInitiatedLogoutView.as_view(), name="rp-initiated-logout"),
     path('testusers/login/', LoginView.as_view(), name="testlogin"),
     path('tst/userinfo', tstuserinfo, name='tstuserinfo'),
