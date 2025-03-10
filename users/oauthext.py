@@ -4,7 +4,7 @@ class CustomOAuth2Validator(OAuth2Validator):
 
     def get_additional_claims(self, request):
         return {
-            'preferred_username': request.user.email,
+            'username': request.user.email,
             'email': request.user.email,
             'userPrincipalName': request.user.email,
         }
