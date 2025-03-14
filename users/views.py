@@ -9,10 +9,7 @@ class LoginView(View):
 
     def get(self, *args, **kwargs):
 
-        if 'next' in args[0].GET.keys():
-            next = args[0].GET['next']
-        else:
-            next = '/'
+        next = args[0].GET.get('next', '/')
 
         usergrouplist = []
         users = User.objects.filter(is_active=True).filter(is_staff=False).order_by('username')
@@ -22,6 +19,7 @@ class LoginView(View):
                 {
                     'username': user.username,
                     'userid': user.id,
+                    'form_id': f'"form_{user.id}"',
                     'groups': ', '.join(map(lambda g : g.name, user.groups.all())),
                 }
             )

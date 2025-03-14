@@ -14,11 +14,11 @@
             {{ user.groups }}
         </td>
         <td>
-            <form method="post" id="testlogin" action="{% url 'testlogin' %}">
+            <form method="post" id={{ user.form_id }} action="{% url 'testlogin' %}">
                 {% csrf_token %}
                 <input type="hidden" name="next" value={{ next }}>
                 <input type="hidden" name="userid" value={{ user.userid }}>
-                <button class="gwknop" type="submit" form="testlogin" name="event" value="login">Login</button>
+                <button class="gwknop" type="submit" form={{ user.form_id }} name="event" value="login">Login</button>
             </form>
         </td>
         </tr>
