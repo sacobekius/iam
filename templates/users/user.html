@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <form method="post" action="{% url 'user-detail' userid=userform.instance.id %}">
+        {% csrf_token %}
+        {{ userform }}
+        <input type="submit" value="Bijwerken">
+    </form>
+    <form method="get" action="{% url 'user-list' %}">
+        <input type="submit" value="Lijst gebruikers">
+    </form>
+{% endblock %}

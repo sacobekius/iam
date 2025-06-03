@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <h2>
+        Testaccounts
+    </h2>
+    <table>
+        <th>
+            Gebruikersnaam
+        </th>
+        <th>
+            Applicatie
+        </th>
+        {% for user in user_list %}
+        <tr>
+        <td>
+            <a href="{% url 'user-detail' userid=user.id %}">{{ user.username }}</a>
+        </td>
+        <td>
+            {{ user.applicatie.name }}
+        </td>
+        </tr>
+        {% endfor %}
+    </table>
+
+
+{% endblock %}
