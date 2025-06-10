@@ -87,3 +87,8 @@ tr:nth-child(odd) {
     display: inline-block;
     cursor: pointer;
 }
+
+div.user-group-checkbox {
+    white-space: nowrap;
+    width: 30px;
+}

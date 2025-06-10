@@ -1,10 +1,13 @@
-from django.http import HttpResponseNotFound, HttpResponseRedirect, JsonResponse
+from django.http import HttpResponseNotFound, HttpResponseRedirect, JsonResponse, HttpResponseNotAllowed
 from django.contrib.auth import logout, login
 from django.shortcuts import render, reverse
 from django.views import View
 
-from users.forms import UserForm
+from users.forms import UserForm, GroupsForm
 from users.models import User
+from django.contrib.auth.models import Group
+
+from users.scimcomm import *
 
 class LoginView(View):
 
@@ -52,12 +55,17 @@ class LoginView(View):
 
         return HttpResponseRedirect(next)
 
-def list_users(request):
-    return render(request,
+def list_users(request, *args, **kwargs):
+    try:
+
+        return render(request,
                    'users/user_list.html',
                    {
-                       'user_list': User.objects.all(),
+                       'user_list': User.objects.filter(applicatie__name=kwargs['applicatie']).all(),
+                       'applicatie': kwargs['applicatie'],
                    })
+    except User.DoesNotExist:
+        return HttpResponseNotFound('User or applcation does not exist')
 
 class UserView(View):
 
@@ -102,8 +110,15 @@ class UserView(View):
                           })
 
 
-def list_groups(request):
-    pass
+def edit_groups(request):
+    if request.method == 'GET':
+        groupsform = GroupsForm(queryset=Group.objects.all())
+    elif request.method == 'POST':
+        groupsform = GroupsForm(request.POST)
+        if groupsform.is_valid():
+            groupsform.save()
+            return HttpResponseRedirect(reverse('edit-groups'))
+    return render(request, 'users/edit_groups.html', {'groupsform': groupsform})
 
 class GroupView(View):
 

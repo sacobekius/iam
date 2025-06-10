@@ -2,6 +2,9 @@ import requests, datetime, time
 from urllib.parse import urljoin
 from users.models import User
 from django.contrib.auth.models import Group
+from django.db.models.signals import post_save, post_delete, m2m_changed
+from django.dispatch import receiver
+
 
 def scimtime(time):
     return time.strftime('%Y-%m-%dT%H:%M:%S')
@@ -95,6 +98,16 @@ class SCIMObjects:
         self.endpoint.delete(f'{self.resource}/{key}')
         del self.objects[key]
 
+@receiver(post_save, sender=Group)
+@receiver(post_delete, sender=Group)
+def group_handler(sender, instance, **kwargs):
+    relevant_syncpoints = []
+    for user in instance.user_set.all():
+        if user.applicatie.applicatie_syncpoint not in relevant_syncpoints:
+            relevant_syncpoints.append(user.applicatie.applicatie_syncpoint)
+    for syncpoint in relevant_syncpoints:
+        to_sync = SCIMProcess(syncpoint)
+        to_sync.process()
 
 class SCIMGroups(SCIMObjects):
 
@@ -119,7 +132,6 @@ class SCIMGroups(SCIMObjects):
 
     def checkSCIM(self, group):
         key = self.getbyexternalid(str(group.id))
-        object_by_key = self.endpoint.get(f'Groups/{key}')
         if self.objects[key]['displayName'] != group.name:
             self.endpoint.patch(f'Groups/{key}', {
                 "schemas": ["urn:ietf:params:scim:api:messages:2.0:PatchOp"],
@@ -142,33 +154,36 @@ class SCIMGroups(SCIMObjects):
                     found_user = users.get(id=scim_user['externalId'])
                     users_found += (found_user.id,)
                 except User.DoesNotExist:
-                    self.endpoint.patch('Groups', {
+                    self.endpoint.patch(f'Groups/{key}', {
                         "Operations": [
                             {
                                 "op": "remove",
-                                "path": f"members[value eq \"{scim_user['id']}\"]"
+                                "path": f'members[value eq "{scim_user["id"]}"]',
                             }
                         ],
                         "schemas": [
                             "urn:ietf:params:scim:api:messages:2.0:PatchOp"
                         ]
                     })
-                    self.objects[key] = self.endpoint.get('Groups', key)
+                    self.objects[key] = self.endpoint.get(f'Groups/{key}')
         user_list = []
         for user in users:
-            user_list.append({"value": f"{self.process.users.getbyexternalid(str(user.id))}"})
-        new_object = self.endpoint.patch(f'Groups/{key}', {
+            if user.id not in users_found:
+                user_list.append({"value": f"{self.process.users.getbyexternalid(str(user.id))}"})
+        if len(user_list) > 0:
+            self.endpoint.patch(f'Groups/{key}', {
                     "Operations": [
                         {
                             "op": "add",
                             "value": user_list,
-                            "path": "members"
+                            "path": "members",
                         }
                     ],
                     "schemas": [
                         "urn:ietf:params:scim:api:messages:2.0:PatchOp"
                     ]
                 })
+            self.objects[key] = self.endpoint.get(f'Groups/{key}')
 #        for user in users:
 #            if user.id not in users_found:
 #                scim_id = self.process.users.getbyexternalid(str(user.id))
@@ -188,7 +203,16 @@ class SCIMGroups(SCIMObjects):
 #                        "urn:ietf:params:scim:api:messages:2.0:PatchOp"
 #                    ]
 #                })
-        self.objects[key] = self.endpoint.get(f'Groups/{key}')
+
+
+@receiver(post_save, sender=User)
+@receiver(post_delete, sender=User)
+@receiver(m2m_changed, sender=User.groups.through)
+def user_handler(sender, instance, **kwargs):
+    if 'action' in kwargs.keys() and kwargs['action'] in ['pre_add', 'pre_remove']:
+        return
+    to_sync = SCIMProcess(instance.applicatie.applicatie_syncpoint)
+    to_sync.process()
 
 
 class SCIMUsers(SCIMObjects):
@@ -197,7 +221,21 @@ class SCIMUsers(SCIMObjects):
         super().__init__(process, endpoint, 'Users')
 
     def checkSCIM(self, user):
-        pass
+        key = self.getbyexternalid(str(user.id))
+        scim_representation = self.objects[key]
+        if (
+                scim_representation['displayName'] != f'{user.first_name} {user.last_name}' or
+                scim_representation['userName'] != user.username or
+                scim_representation['active'] != user.is_active
+        ):
+            self.endpoint.patch(f'Users/{key}', {
+                "active": user.is_active,
+                "created": scimtime(user.date_joined),
+                "lastModified": scimtime(datetime.datetime.now()),
+                "schemas": ["urn:ietf:params:scim:schemas:core:2.0:User"],
+                "userName": user.username,
+                "displayName": f'{user.first_name} {user.last_name}',
+            })
 
     def newSCIM(self, user):
         scim_representation = {
@@ -226,25 +264,26 @@ class SCIMProcess:
             self.groups = SCIMGroups(self, self.endpoint)
 
             users_found = ()
-            for scim_user in self.users.keys():
+            scim_user_keys = list(self.users.keys())
+            for scim_user in scim_user_keys:
                 try:
                     user = User.objects.get(id=self.users[scim_user]['externalId'])
                     self.users.checkSCIM(user)
                     users_found += (user.id,)
-                except (User.DoesNotExist, ValueError):
+                except (User.DoesNotExist, ValueError, KeyError):
                     self.users.delSCIM(scim_user)
-                    self.endpoint.delete(f'Users/{scim_user['id']}')
             for user in User.objects.all():
                 if user.id not in users_found:
                     self.users.newSCIM(user)
 
             groups_found = ()
-            for scim_group in self.groups.keys():
+            scim_group_keys = list(self.groups.keys())
+            for scim_group in scim_group_keys:
                 try:
                     group = Group.objects.get(id=self.groups[scim_group]['externalId'])
                     self.groups.checkSCIM(group)
                     groups_found += (group.id,)
-                except (ValueError, KeyError):
+                except (Group.DoesNotExist, ValueError, KeyError):
                     self.groups.delSCIM(scim_group)
             for group in Group.objects.all():
                 if group.id not in groups_found:

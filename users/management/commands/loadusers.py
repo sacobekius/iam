@@ -22,21 +22,25 @@ class Command(BaseCommand):
         Group.objects.all().delete()
         try:
             with open(f'{options['gebruikers']}', 'r', encoding='latin_1') as gebruikers:
-                gebruikers_reader = csv.DictReader(gebruikers, delimiter=';')
-                for row in gebruikers_reader:
-                    try:
-                        user = User.objects.get(username=row['gebruiker'])
-                    except User.DoesNotExist:
-                        user = User.objects.create(username=row['gebruiker'], applicatie=applicatie)
-                        user.is_staff = False
-                        user.is_active = True
-                        user.first_name = row['gebruiker']
-                        user.last_name = applicatie.name
-                        user.save()
-                    try:
-                        group = Group.objects.get(name=row['groep'])
-                    except Group.DoesNotExist:
-                        group = Group.objects.create(name=row['groep'])
-                    group.user_set.add(user)
+                users_reader = csv.DictReader(gebruikers, delimiter=';')
+                for row in users_reader:
+                    if row['gebruiker']:
+                        try:
+                            user = User.objects.get(username=row['gebruiker'])
+                        except User.DoesNotExist:
+                            user = User.objects.create(username=row['gebruiker'], applicatie=applicatie)
+                            user.is_staff = False
+                            user.is_active = True
+                            user.first_name = row['gebruiker']
+                            user.last_name = applicatie.name
+                            user.email = row['gebruiker'] + '@testen.nl'
+                            user.save()
+                    if row['groep']:
+                        try:
+                            group = Group.objects.get(name=row['groep'])
+                        except Group.DoesNotExist:
+                            group = Group.objects.create(name=row['groep'])
+                    if row['gebruiker']:
+                        group.user_set.add(user)
         except FileNotFoundError:
             print(f'Bestand {options['gebruikers']} niet gevonden')

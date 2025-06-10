@@ -6,7 +6,7 @@
         {{ userform }}
         <input type="submit" value="Bijwerken">
     </form>
-    <form method="get" action="{% url 'user-list' %}">
+    <form method="get" action="{% url 'user-list' applicatie=userform.instance.applicatie.name %}">
         <input type="submit" value="Lijst gebruikers">
     </form>
 {% endblock %}

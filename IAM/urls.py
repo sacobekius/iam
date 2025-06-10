@@ -19,7 +19,7 @@ from django.urls import include, path
 from oauth2_provider import urls as oauth2_urls
 from oauth2_provider.views import ConnectDiscoveryInfoView, RPInitiatedLogoutView
 
-from users.views import LoginView, list_users, UserView, list_groups, GroupView
+from users.views import LoginView, list_users, UserView, edit_groups, GroupView
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -33,8 +33,8 @@ urlpatterns = [
     path("o/authorize/oauth2/v2.0/logout/", RPInitiatedLogoutView.as_view(), name="rp-initiated-logout"),
     path('testusers/login/', LoginView.as_view(), name="testlogin"),
 
-    path('users/', list_users, name='user-list'),
+    path('<str:applicatie>/users/', list_users, name='user-list'),
     path('users/<int:userid>/', UserView.as_view(), name='user-detail'),
-    path('groups/', list_groups, name='group-list'),
+    path('groups/', edit_groups, name='edit-groups'),
     path('groups/<int:groupid>/', GroupView.as_view(), name='group-detail'),
 ]
