@@ -131,7 +131,7 @@ class SCIMGroups(SCIMObjects):
             "version": None,
         }
         new_object = self.endpoint.post('Groups', scim_representation)
-        self.objects[new_object['id']] = self.endpoint.get(f'Groups/{new_object['id']}')
+        self.objects[new_object['id']] = self.endpoint.get(f"Groups/{new_object['id']}")
         self.patchMembers(new_object['id'], group.user_set.all())
 
     def checkSCIM(self, group):
