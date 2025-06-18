@@ -197,8 +197,9 @@ class SCIMGroups(SCIMObjects):
 def user_handler(sender, instance, **kwargs):
     if 'action' in kwargs.keys() and kwargs['action'] in ['pre_add', 'pre_remove']:
         return
-    to_sync = SCIMProcess(instance.applicatie.applicatie_syncpoint)
-    to_sync.process()
+    if instance.applicatie:
+        to_sync = SCIMProcess(instance.applicatie.applicatie_syncpoint)
+        to_sync.process()
 
 
 class SCIMUsers(SCIMObjects):
