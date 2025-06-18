@@ -16,12 +16,12 @@ class Command(BaseCommand):
         try:
             applicatie = Application.objects.get(name=options['applicatie'])
         except Application.DoesNotExist:
-            print(f'Applicatie {options['applicatie']} niet gevonden')
+            print(f"Applicatie {options['applicatie']} niet gevonden")
             return
         User.objects.all().filter(applicatie=applicatie.pk).delete()
         Group.objects.all().delete()
         try:
-            with open(f'{options['gebruikers']}', 'r', encoding='latin_1') as gebruikers:
+            with open(f"{options['gebruikers']}", 'r', encoding='latin_1') as gebruikers:
                 users_reader = csv.DictReader(gebruikers, delimiter=';')
                 for row in users_reader:
                     if row['gebruiker']:
@@ -43,4 +43,4 @@ class Command(BaseCommand):
                     if row['gebruiker']:
                         group.user_set.add(user)
         except FileNotFoundError:
-            print(f'Bestand {options['gebruikers']} niet gevonden')
+            print(f"Bestand {options['gebruikers']} niet gevonden")
