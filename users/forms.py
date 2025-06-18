@@ -9,7 +9,7 @@ GroupsForm = forms.modelformset_factory(Group, fields=('name',), extra=1, can_de
 class UserForm(forms.ModelForm):
     class Meta:
         model = User
-        fields = ('username', 'email', 'groups')
+        fields = ('username', 'personeelsnummer', 'email', 'groups')
         widgets = {
             'groups': forms.CheckboxSelectMultiple({'class': 'user-group-checkbox'}),
         }

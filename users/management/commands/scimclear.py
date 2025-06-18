@@ -9,6 +9,6 @@ class Command(BaseCommand):
         parser.add_argument('applicatie', type=str, help='Applicatie waar de gebruikers voor worden verwijderd')
 
     def handle(self, *args, **options):
-        for sync_point in SyncPoint.objects.filter(url__isnull=False, applicatie=options['applicatie']):
+        for sync_point in SyncPoint.objects.filter(url__isnull=False, applicatie__name=options['applicatie']):
             client = SCIMProcess(sync_point)
             client.clear()

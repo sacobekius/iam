@@ -61,6 +61,10 @@ class SCIMComm:
         response = self.session.post(url=self._get_url(resource_path), json=data)
         return self._process_response(response, [201])
 
+    def put(self, resource_path: str, data: dict):
+        response = self.session.put(url=self._get_url(resource_path), json=data)
+        return self._process_response(response, [201])
+
     def patch(self, resource_path: str, data: dict):
         response = self.session.patch(url=self._get_url(resource_path), json=data)
         return self._process_response(response, [201])
@@ -143,6 +147,7 @@ class SCIMGroups(SCIMObjects):
                     }
                 ]
             })
+            self.objects[key] = self.endpoint.get(f'Groups/{key}')
         self.patchMembers(key, group.user_set.all())
 
     def patchMembers(self, key, users):
@@ -184,25 +189,6 @@ class SCIMGroups(SCIMObjects):
                     ]
                 })
             self.objects[key] = self.endpoint.get(f'Groups/{key}')
-#        for user in users:
-#            if user.id not in users_found:
-#                scim_id = self.process.users.getbyexternalid(str(user.id))
-#                new_object = self.endpoint.patch(f'Groups/{key}', {
-#                    "Operations": [
-#                        {
-#                            "op": "add",
-#                            "value": [
-#                                {
-#                                    "value": f"{scim_id}"
-#                                },
-#                            ],
-#                            "path": "members"
-#                        }
-#                    ],
-#                    "schemas": [
-#                        "urn:ietf:params:scim:api:messages:2.0:PatchOp"
-#                    ]
-#                })
 
 
 @receiver(post_save, sender=User)
@@ -226,16 +212,45 @@ class SCIMUsers(SCIMObjects):
         if (
                 scim_representation['displayName'] != f'{user.first_name} {user.last_name}' or
                 scim_representation['userName'] != user.username or
+                # scim_representation['personeelsNummer'] != user.personeelsnummer or
                 scim_representation['active'] != user.is_active
         ):
             self.endpoint.patch(f'Users/{key}', {
-                "active": user.is_active,
-                "created": scimtime(user.date_joined),
-                "lastModified": scimtime(datetime.datetime.now()),
-                "schemas": ["urn:ietf:params:scim:schemas:core:2.0:User"],
-                "userName": user.username,
-                "displayName": f'{user.first_name} {user.last_name}',
+                "schemas": ["urn:ietf:params:scim:api:messages:2.0:PatchOp"],
+                "Operations": [
+                    {
+                        "op": "replace",
+                        "value": user.username,
+                        "path": "userName",
+                    },
+                    # {
+                    #    "op": "replace",
+                    #    "value": user.personeelsnummer,
+                    #    "path": "personeelsNummer",
+                    # },
+                    {
+                        "op": "replace",
+                        "value": scimtime(user.date_joined),
+                        "path": "created",
+                    },
+                    {
+                        "op": "replace",
+                        "value": scimtime(datetime.datetime.now()),
+                        "path": "lastModified",
+                    },
+                    {
+                        "op": "replace",
+                        "value": f'{user.first_name} {user.last_name}',
+                        "path": "displayName",
+                    },
+                    {
+                        "op": "replace",
+                        "value": user.is_active,
+                        "path": "active",
+                    },
+                ]
             })
+            self.objects[key] = self.endpoint.get(f'Users/{key}')
 
     def newSCIM(self, user):
         scim_representation = {
@@ -245,6 +260,7 @@ class SCIMUsers(SCIMObjects):
             "schemas": ["urn:ietf:params:scim:schemas:core:2.0:User"],
             "externalId": str(user.id),
             "userName": user.username,
+            # "personeelsNummer": user.personeelsnummer,
             "displayName": f'{user.first_name} {user.last_name}',
         }
         new_object = self.endpoint.post('Users', scim_representation)
