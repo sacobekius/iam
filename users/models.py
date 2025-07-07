@@ -6,7 +6,7 @@ from oauth2_provider.models import Application
 
 class User(AbstractUser):
     applicatie = models.ForeignKey(Application, related_name='applicatie_users', on_delete=models.CASCADE, null=True, blank=True)
-    personeelsnummer = models.IntegerField(null=True, blank=True)
+    personeelsnummer = models.CharField(max_length=6, null=True, blank=True)
 
 class SyncPoint(models.Model):
     applicatie = OneToOneField(Application, related_name='applicatie_syncpoint', on_delete=models.CASCADE)
