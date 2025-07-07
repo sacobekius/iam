@@ -213,7 +213,7 @@ class SCIMUsers(SCIMObjects):
         if (
                 scim_representation['displayName'] != f'{user.first_name} {user.last_name}' or
                 scim_representation['userName'] != user.username or
-                # scim_representation['personeelsNummer'] != user.personeelsnummer or
+                scim_representation['FunctionNumber'] != str(user.personeelsnummer) or
                 scim_representation['active'] != user.is_active
         ):
             self.endpoint.patch(f'Users/{key}', {
@@ -224,11 +224,11 @@ class SCIMUsers(SCIMObjects):
                         "value": user.username,
                         "path": "userName",
                     },
-                    # {
-                    #    "op": "replace",
-                    #    "value": user.personeelsnummer,
-                    #    "path": "personeelsNummer",
-                    # },
+                    {
+                        "op": "replace",
+                        "value": str(user.personeelsnummer),
+                        "path": "FunctionNumber",
+                    },
                     {
                         "op": "replace",
                         "value": scimtime(user.date_joined),
@@ -261,7 +261,7 @@ class SCIMUsers(SCIMObjects):
             "schemas": ["urn:ietf:params:scim:schemas:core:2.0:User"],
             "externalId": str(user.id),
             "userName": user.username,
-            # "personeelsNummer": user.personeelsnummer,
+            "FunctionNumber": str(user.personeelsnummer),
             "displayName": f'{user.first_name} {user.last_name}',
         }
         new_object = self.endpoint.post('Users', scim_representation)
@@ -289,7 +289,7 @@ class SCIMProcess:
                     users_found += (user.id,)
                 except (User.DoesNotExist, ValueError, KeyError):
                     self.users.delSCIM(scim_user)
-            for user in User.objects.all():
+            for user in User.objects.filter(applicatie__name__exact=self.endpoint.sync_point.applicatie.name):
                 if user.id not in users_found:
                     self.users.newSCIM(user)
 

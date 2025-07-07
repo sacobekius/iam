@@ -25,6 +25,10 @@ class Command(BaseCommand):
                 users_reader = csv.DictReader(gebruikers, delimiter=';')
                 for row in users_reader:
                     if row['gebruiker']:
+                        if row['personeelsnummer']:
+                            personeelsnummer = row['personeelsnummer']
+                        else:
+                            personeelsnummer = None
                         try:
                             user = User.objects.get(username=row['gebruiker'])
                         except User.DoesNotExist:
@@ -34,6 +38,8 @@ class Command(BaseCommand):
                             user.first_name = row['gebruiker']
                             user.last_name = applicatie.name
                             user.email = row['gebruiker'] + '@testen.nl'
+                            if personeelsnummer:
+                                user.personeelsnummer = personeelsnummer
                             user.save()
                     if row['groep']:
                         try:
