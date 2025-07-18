@@ -1,7 +1,6 @@
 import requests, datetime, time
 from urllib.parse import urljoin
-from users.models import User
-from django.contrib.auth.models import Group
+from users.models import User, LocGroup
 from django.db.models.signals import post_save, post_delete, m2m_changed
 from django.dispatch import receiver
 
@@ -102,8 +101,8 @@ class SCIMObjects:
         self.endpoint.delete(f'{self.resource}/{key}')
         del self.objects[key]
 
-@receiver(post_save, sender=Group)
-@receiver(post_delete, sender=Group)
+@receiver(post_save, sender=LocGroup)
+@receiver(post_delete, sender=LocGroup)
 def group_handler(sender, instance, **kwargs):
     relevant_syncpoints = []
     for user in instance.user_set.all():
@@ -213,7 +212,7 @@ class SCIMUsers(SCIMObjects):
         if (
                 scim_representation['displayName'] != f'{user.first_name} {user.last_name}' or
                 scim_representation['userName'] != user.username or
-                scim_representation['FunctionNumber'] != str(user.personeelsnummer) or
+                scim_representation['functionNumber'] != str(user.personeelsnummer) or
                 scim_representation['active'] != user.is_active
         ):
             self.endpoint.patch(f'Users/{key}', {
@@ -227,7 +226,7 @@ class SCIMUsers(SCIMObjects):
                     {
                         "op": "replace",
                         "value": str(user.personeelsnummer),
-                        "path": "FunctionNumber",
+                        "path": "functionNumber",
                     },
                     {
                         "op": "replace",
@@ -261,7 +260,7 @@ class SCIMUsers(SCIMObjects):
             "schemas": ["urn:ietf:params:scim:schemas:core:2.0:User"],
             "externalId": str(user.id),
             "userName": user.username,
-            "FunctionNumber": str(user.personeelsnummer),
+            "functionNumber": str(user.personeelsnummer),
             "displayName": f'{user.first_name} {user.last_name}',
         }
         new_object = self.endpoint.post('Users', scim_representation)
@@ -276,6 +275,8 @@ class SCIMProcess:
         self.endpoint = SCIMComm(sync_point)
 
     def process(self):
+        if not self.endpoint.sync_point.active:
+            return False
         try:
             self.users = SCIMUsers(self, self.endpoint)
             self.groups = SCIMGroups(self, self.endpoint)
@@ -297,12 +298,12 @@ class SCIMProcess:
             scim_group_keys = list(self.groups.keys())
             for scim_group in scim_group_keys:
                 try:
-                    group = Group.objects.get(id=self.groups[scim_group]['externalId'])
+                    group = LocGroup.objects.get(id=self.groups[scim_group]['externalId'])
                     self.groups.checkSCIM(group)
                     groups_found += (group.id,)
-                except (Group.DoesNotExist, ValueError, KeyError):
+                except (LocGroup.DoesNotExist, ValueError, KeyError):
                     self.groups.delSCIM(scim_group)
-            for group in Group.objects.all():
+            for group in LocGroup.objects.all():
                 if group.id not in groups_found:
                     self.groups.newSCIM(group)
 

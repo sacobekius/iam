@@ -2,7 +2,7 @@
 
 {% block content %}
     <h2>
-        Testaccounts voor {{ applicatie }}
+        Fictieve accounts voor {{ applicatie }}, gebruik alleen met fictieve data
     </h2>
     <table>
         <th>
@@ -22,6 +22,9 @@
         </tr>
         {% endfor %}
     </table>
-
-
+    
+    <form method="get" action="{% url 'new-user' applicatie=applicatie %}">
+        <input type="submit" value="nieuwe gebruiker">
+    </form>
+    
 {% endblock %}

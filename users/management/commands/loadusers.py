@@ -1,8 +1,8 @@
 import csv
 
 from django.core.management.base import BaseCommand
-from users.models import User
-from django.contrib.auth.models import Group
+from users.models import User, LocGroup
+from users.scimcomm import SCIMProcess
 from oauth2_provider.models import Application
 
 class Command(BaseCommand):
@@ -18,8 +18,10 @@ class Command(BaseCommand):
         except Application.DoesNotExist:
             print(f"Applicatie {options['applicatie']} niet gevonden")
             return
+        applicatie.applicatie_syncpoint.active = False
+        applicatie.applicatie_syncpoint.save()
         User.objects.all().filter(applicatie=applicatie.pk).delete()
-        Group.objects.all().delete()
+        LocGroup.objects.all().filter(applicatie=applicatie.pk).delete()
         try:
             with open(f"{options['gebruikers']}", 'r', encoding='latin_1') as gebruikers:
                 users_reader = csv.DictReader(gebruikers, delimiter=';')
@@ -43,10 +45,15 @@ class Command(BaseCommand):
                             user.save()
                     if row['groep']:
                         try:
-                            group = Group.objects.get(name=row['groep'])
-                        except Group.DoesNotExist:
-                            group = Group.objects.create(name=row['groep'])
+                            group = LocGroup.objects.get(name=row['groep'])
+                        except LocGroup.DoesNotExist:
+                            group = LocGroup.objects.create(name=row['groep'], applicatie=applicatie)
                     if row['gebruiker']:
                         group.user_set.add(user)
+                        group.save()
         except FileNotFoundError:
             print(f"Bestand {options['gebruikers']} niet gevonden")
+        applicatie.applicatie_syncpoint.active = True
+        applicatie.applicatie_syncpoint.save()
+        client = SCIMProcess(applicatie.applicatie_syncpoint)
+        client.process()

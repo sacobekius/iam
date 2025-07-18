@@ -2,9 +2,9 @@
 
 {% block content %}
     <h2>
-        Groepen
+        Groepen voor {{ applicatie }}
     </h2>
-    <form method="post" action="{% url 'edit-groups' %}">
+    <form method="post" action="{% url 'edit-groups' applicatie=applicatie %}">
         {% csrf_token %}
         {{ groupsform.as_table }}
         <input class="gwknop" type="submit" value="Werk bij">

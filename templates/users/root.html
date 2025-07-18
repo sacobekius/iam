@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+
+{% block content %}
+    {% for application in applications %}
+        <b>{{ application.name }}</b>:
+        <form method="get" action="{% url 'user-list' applicatie=application.name %}">
+            <input type="submit" value="Gebruikers {{ application.name }}">
+        </form>
+        <form method="get" action="{% url 'edit-groups' applicatie=application.name %}">
+            <input type="submit" value="Groepen {{ application.name }}">
+        </form>
+    {% endfor %}
+
+{% endblock %}

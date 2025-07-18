@@ -1,13 +1,21 @@
+from django.db import transaction
 from django.http import HttpResponseNotFound, HttpResponseRedirect, JsonResponse, HttpResponseNotAllowed
 from django.contrib.auth import logout, login
 from django.shortcuts import render, reverse
 from django.views import View
 
-from users.forms import UserForm, GroupsForm
-from users.models import User
-from django.contrib.auth.models import Group
+from oauth2_provider.models import Application
+from users.forms import UserForm, LocGroupsForm
+from users.models import User, LocGroup
 
 from users.scimcomm import *
+
+def iam_root(request):
+    applications = []
+    for application in Application.objects.all():
+        applications.append({'name': application.name})
+    return render(request, 'users/root.html', { 'applications': applications })
+
 
 class LoginView(View):
 
@@ -67,6 +75,23 @@ def list_users(request, *args, **kwargs):
     except User.DoesNotExist:
         return HttpResponseNotFound('User or applcation does not exist')
 
+def new_user(request, *args, **kwargs):
+    applicatie = Application.objects.get(name=kwargs['applicatie'])
+    user = User.objects.create(applicatie=applicatie)
+    user.username = f'new user {applicatie.name}'
+    user.is_staff = False
+    user.is_active = True
+    user.save()
+    return HttpResponseRedirect(reverse('user-detail', args=(user.id,)))
+
+def user_delete(request, *args, **kwargs):
+    try:
+        user = User.objects.get(id=kwargs['userid'])
+        applicatie = user.applicatie.name
+        user.delete()
+        return HttpResponseRedirect(reverse('user-list', args=(applicatie,)))
+    except (User.DoesNotExist, KeyError):
+        return HttpResponseNotFound('User does not exist')
 class UserView(View):
 
     def get_user(self, *args, **kwargs):
@@ -110,15 +135,24 @@ class UserView(View):
                           })
 
 
-def edit_groups(request):
+def edit_groups(request, *args, **kwargs):
+    try:
+        applicatie = Application.objects.get(name=kwargs['applicatie'])
+    except (Application.DoesNotExist, KeyError):
+        return HttpResponseNotFound('Applicatie does not exist')
     if request.method == 'GET':
-        groupsform = GroupsForm(queryset=Group.objects.all())
+        groupsform = LocGroupsForm(instance=applicatie)
+        return render(request, 'users/edit_groups.html', {
+            'applicatie': applicatie.name,
+            'groupsform': groupsform
+        })
     elif request.method == 'POST':
-        groupsform = GroupsForm(request.POST)
+        groupsform = LocGroupsForm(request.POST, instance=applicatie)
         if groupsform.is_valid():
             groupsform.save()
-            return HttpResponseRedirect(reverse('edit-groups'))
-    return render(request, 'users/edit_groups.html', {'groupsform': groupsform})
+            return HttpResponseRedirect(reverse('edit-groups', args=(applicatie.name,)))
+    return None
+
 
 class GroupView(View):
 
