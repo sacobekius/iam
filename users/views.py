@@ -32,7 +32,7 @@ class LoginView(View):
                     'username': user.username,
                     'userid': user.id,
                     'form_id': f'"form_{user.id}"',
-                    'groups': ', '.join(map(lambda g : g.name, user.groups.all())),
+                    'groups': ', '.join(map(lambda g : g.name, user.locgroup.all())),
                 }
             )
 

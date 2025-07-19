@@ -10,6 +10,27 @@ body {
 
 }
 
+div.menu {
+    position: fixed;
+    opacity: 0.9;
+    top: 0;
+    width: 100%;
+    height: 20px;
+    font-size: 1.5em;
+    border: 6px solid white;
+    background-color: white;
+    display: flex;
+    justify-content: space-evenly;
+
+}
+
+.rolhorizontaal {
+    max-width: 100%;
+    white-space: nowrap;
+    overflow-x: auto;
+    overflow-y: hidden;
+}
+
 #content, #contentbreed {
     font-family: 'Titillium Web', sans-serif;
     color: #000000;
