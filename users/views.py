@@ -1,5 +1,6 @@
 from django.db import transaction
-from django.http import HttpResponseNotFound, HttpResponseRedirect, JsonResponse, HttpResponseNotAllowed
+from django.http import HttpResponseNotFound, HttpResponseRedirect, JsonResponse, HttpResponseNotAllowed, \
+    HttpResponseServerError
 from django.contrib.auth import logout, login
 from django.shortcuts import render, reverse
 from django.views import View
@@ -78,7 +79,7 @@ def list_users(request, *args, **kwargs):
 def new_user(request, *args, **kwargs):
     applicatie = Application.objects.get(name=kwargs['applicatie'])
     user = User.objects.create(applicatie=applicatie)
-    user.username = f'new user {applicatie.name}'
+    user.username = f'new_{applicatie.name}'
     user.is_staff = False
     user.is_active = True
     user.save()
@@ -92,6 +93,7 @@ def user_delete(request, *args, **kwargs):
         return HttpResponseRedirect(reverse('user-list', args=(applicatie,)))
     except (User.DoesNotExist, KeyError):
         return HttpResponseNotFound('User does not exist')
+
 class UserView(View):
 
     def get_user(self, *args, **kwargs):
@@ -106,7 +108,7 @@ class UserView(View):
 
         user = self.get_user(*args, **kwargs)
         if type(user) is not User:
-            return user
+            return HttpResponseServerError('')
 
         userform = UserForm(instance=user)
 
@@ -120,7 +122,7 @@ class UserView(View):
 
         user = self.get_user(*args, **kwargs)
         if type(user) is not User:
-            return user
+            return HttpResponseServerError('')
 
         userform = UserForm(self.request.POST, instance=user)
 
