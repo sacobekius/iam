@@ -78,11 +78,15 @@ def list_users(request, *args, **kwargs):
 
 def new_user(request, *args, **kwargs):
     applicatie = Application.objects.get(name=kwargs['applicatie'])
-    user = User.objects.create(applicatie=applicatie)
-    user.username = f'new_{applicatie.name}'
-    user.is_staff = False
-    user.is_active = True
-    user.save()
+    new_name = f'new_{applicatie.name}'
+    try:
+        user = User.objects.get(username=new_name)
+    except User.DoesNotExist:
+        user = User.objects.create(applicatie=applicatie)
+        user.username = f'new_{applicatie.name}'
+        user.is_staff = False
+        user.is_active = True
+        user.save()
     return HttpResponseRedirect(reverse('user-detail', args=(user.id,)))
 
 def user_delete(request, *args, **kwargs):
