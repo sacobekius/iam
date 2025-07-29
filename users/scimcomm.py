@@ -202,7 +202,8 @@ def user_handler(sender, instance, **kwargs):
                 curr_user.first_name != instance.first_name or \
                 curr_user.last_name != instance.last_name or \
                 curr_user.email != instance.email or \
-                curr_user.is_active != instance.is_active
+                curr_user.is_active != instance.is_active or \
+                curr_user.personeelsnummer != instance.personeelsnummer
         if dirty:
             to_sync = SCIMProcess(instance.applicatie.applicatie_syncpoint)
             to_sync.process()
