@@ -198,7 +198,7 @@ def user_pre_handler(sender, instance, **kwargs):
         return
     if type(instance) == User and instance.applicatie:
         curr_user = User.objects.get(id=instance.id)
-        instance.applicatie.applicatie_syncpoint.dirty = curr_user.username != instance.username or \
+        instance.applicatie.applicatie_syncpoint.dirty |= curr_user.username != instance.username or \
                 curr_user.first_name != instance.first_name or \
                 curr_user.last_name != instance.last_name or \
                 curr_user.email != instance.email or \
