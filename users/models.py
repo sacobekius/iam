@@ -18,6 +18,7 @@ class User(AbstractUser):
 class SyncPoint(models.Model):
     applicatie = models.OneToOneField(Application, related_name='applicatie_syncpoint', on_delete=models.CASCADE)
     active = models.BooleanField(default=False)
+    dirty =models.BooleanField(default=False)
     url = models.URLField(max_length=255, blank=True, null=True)
     auth_token = models.CharField(max_length=255, blank=True, null=True)
     last_request = models.TextField(blank=True, null=True)

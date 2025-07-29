@@ -1,7 +1,7 @@
 import requests, datetime, time
 from urllib.parse import urljoin
 from users.models import User, LocGroup
-from django.db.models.signals import pre_save, pre_delete, m2m_changed
+from django.db.models.signals import pre_save, pre_delete, m2m_changed, post_save, post_delete
 from django.dispatch import receiver
 
 
@@ -193,18 +193,28 @@ class SCIMGroups(SCIMObjects):
 @receiver(pre_save, sender=User)
 @receiver(pre_delete, sender=User)
 @receiver(m2m_changed, sender=User.groups.through)
-def user_handler(sender, instance, **kwargs):
+def user_pre_handler(sender, instance, **kwargs):
     if 'action' in kwargs.keys() and kwargs['action'] in ['pre_add', 'pre_remove']:
         return
     if type(instance) == User and instance.applicatie:
         curr_user = User.objects.get(id=instance.id)
-        dirty = curr_user.username != instance.username or \
+        instance.applicatie.applicatie_syncpoint.dirty = curr_user.username != instance.username or \
                 curr_user.first_name != instance.first_name or \
                 curr_user.last_name != instance.last_name or \
                 curr_user.email != instance.email or \
                 curr_user.is_active != instance.is_active or \
                 curr_user.personeelsnummer != instance.personeelsnummer
-        if dirty:
+        instance.applicatie.applicatie_syncpoint.save()
+
+@receiver(post_save, sender=User)
+@receiver(post_delete, sender=User)
+def user_post_handler(sender, instance, **kwargs):
+    if 'action' in kwargs.keys() and kwargs['action'] in ['pre_add', 'pre_remove']:
+        return
+    if type(instance) == User and instance.applicatie:
+        if instance.applicatie.applicatie_syncpoint.dirty:
+            instance.applicatie.applicatie_syncpoint.dirty = False
+            instance.applicatie.applicatie_syncpoint.save()
             to_sync = SCIMProcess(instance.applicatie.applicatie_syncpoint)
             to_sync.process()
 
