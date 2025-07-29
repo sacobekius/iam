@@ -1,7 +1,7 @@
 import requests, datetime, time
 from urllib.parse import urljoin
 from users.models import User, LocGroup
-from django.db.models.signals import post_save, post_delete, m2m_changed
+from django.db.models.signals import pre_save, pre_delete, m2m_changed
 from django.dispatch import receiver
 
 
@@ -101,8 +101,8 @@ class SCIMObjects:
         self.endpoint.delete(f'{self.resource}/{key}')
         del self.objects[key]
 
-@receiver(post_save, sender=LocGroup)
-@receiver(post_delete, sender=LocGroup)
+@receiver(pre_save, sender=LocGroup)
+@receiver(pre_delete, sender=LocGroup)
 def group_handler(sender, instance, **kwargs):
     relevant_syncpoints = []
     for user in instance.user_set.all():
@@ -190,15 +190,22 @@ class SCIMGroups(SCIMObjects):
             self.objects[key] = self.endpoint.get(f'Groups/{key}')
 
 
-@receiver(post_save, sender=User)
-@receiver(post_delete, sender=User)
+@receiver(pre_save, sender=User)
+@receiver(pre_delete, sender=User)
 @receiver(m2m_changed, sender=User.groups.through)
 def user_handler(sender, instance, **kwargs):
     if 'action' in kwargs.keys() and kwargs['action'] in ['pre_add', 'pre_remove']:
         return
     if type(instance) == User and instance.applicatie:
-        to_sync = SCIMProcess(instance.applicatie.applicatie_syncpoint)
-        to_sync.process()
+        curr_user = User.objects.get(id=instance.id)
+        dirty = curr_user.username != instance.username or \
+                curr_user.first_name != instance.first_name or \
+                curr_user.last_name != instance.last_name or \
+                curr_user.email != instance.email or \
+                curr_user.is_active != instance.is_active
+        if dirty:
+            to_sync = SCIMProcess(instance.applicatie.applicatie_syncpoint)
+            to_sync.process()
 
 
 class SCIMUsers(SCIMObjects):
