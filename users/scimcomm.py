@@ -211,7 +211,7 @@ def user_pre_handler(sender, instance, **kwargs):
 def user_post_handler(sender, instance, **kwargs):
     if 'action' in kwargs.keys() and kwargs['action'] in ['pre_add', 'pre_remove']:
         return
-    if type(instance) == User and instance.applicatie:
+    if type(instance) == User and instance.applicatie and hasattr(instance.applicatie, 'applicatie_syncpoint'):
         if instance.applicatie.applicatie_syncpoint.dirty:
             instance.applicatie.applicatie_syncpoint.dirty = False
             instance.applicatie.applicatie_syncpoint.save()
