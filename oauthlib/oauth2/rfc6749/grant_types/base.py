@@ -14,6 +14,42 @@ from ..utils import is_secure_transport
 
 log = logging.getLogger(__name__)
 
+# Toegevoegd
+def form_post_body(redirect_uri, token):
+    body = (
+        f'<html>\n'
+        f'   <head>\n'
+        f'       <title> Submit This Form </title>\n'
+        f'       <script type="text/javascript">\n'
+        f'       window.onload = function () {{\n'
+        f'           let form = document.getElementById("oauthForm");\n'
+        f'           form.requestSubmit();\n'
+        f'       }}\n'
+        f'       </script>\n'
+        f'   </head>\n'
+        f'   <body>\n'
+        f'      <form id="oauthForm" method="post" action="{redirect_uri}">\n'
+    )
+    for key in token.keys():
+        body += (
+        f'          <input type="hidden" name="{key}" value=\'{token[key]}\'/>\n'
+        )
+    body += (
+        f'       </form>\n'
+        f'   </body>\n'
+        f'</html>'
+    )
+    return body
+
+# Toegevoegd
+def form_post_headers(headers):
+    headers['Content-Type'] = 'text/html;charset=UTF-8'
+    headers['Cache-Control'] = 'no-cache, no-store'
+    headers['Pragma'] = 'no-cache'
+    headers['Access-Control-Allow-Origin'] = '*'
+    headers['Access-Control-Allow-Headers'] = 'Content-Type'
+    headers['Access-Control-Allow-Methods'] = 'OPTIONS,POST,GET'
+    return headers
 
 class ValidatorsContainer:
     """
@@ -143,7 +179,7 @@ class GrantTypeBase:
         :type request: oauthlib.common.Request
         """
         # Only add a hybrid access token on auth step if asked for
-        if request.response_type not in ["token", "code token", "id_token token", "code id_token token"]:
+        if not request.response_type in ["token", "code token", "id_token token", "code id_token token"]:
             return token
 
         token.update(token_handler.create_token(request, refresh_token=False))
@@ -190,7 +226,8 @@ class GrantTypeBase:
         """
         request.response_mode = request.response_mode or self.default_response_mode
 
-        if request.response_mode not in ('query', 'fragment'):
+        # toegevoegd: form_post
+        if request.response_mode not in ('query', 'fragment', 'form_post'):
             log.debug('Overriding invalid response mode %s with %s',
                       request.response_mode, self.default_response_mode)
             request.response_mode = self.default_response_mode
@@ -199,7 +236,10 @@ class GrantTypeBase:
 
         if request.response_type == 'none':
             state = token.get('state', None)
-            token_items = [('state', state)] if state else []
+            if state:
+                token_items = [('state', state)]
+            else:
+                token_items = []
 
         if request.response_mode == 'query':
             headers['Location'] = add_params_to_uri(
@@ -210,6 +250,12 @@ class GrantTypeBase:
             headers['Location'] = add_params_to_uri(
                 request.redirect_uri, token_items, fragment=True)
             return headers, body, status
+
+        # toegevoegd
+        if request.response_mode == 'form_post':
+            body = form_post_body(request.redirect_uri, token)
+            headers = form_post_headers(headers)
+            return headers, body, 200
 
         raise NotImplementedError(
             'Subclasses must set a valid default_response_mode')
