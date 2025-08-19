@@ -196,7 +196,7 @@ class SCIMGroups(SCIMObjects):
 def user_pre_handler(sender, instance, **kwargs):
     if 'action' in kwargs.keys() and kwargs['action'] in ['pre_add', 'pre_remove']:
         return
-    if type(instance) == User and instance.applicatie:
+    if type(instance) == User and instance.applicatie and instance.applicatie.applicatie_syncpoint:
         curr_user = User.objects.get(id=instance.id)
         instance.applicatie.applicatie_syncpoint.dirty |= curr_user.username != instance.username or \
                 curr_user.first_name != instance.first_name or \
