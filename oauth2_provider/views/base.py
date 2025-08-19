@@ -106,6 +106,8 @@ class AuthorizationView(BaseAuthorizationView, FormView):
             "client_id": self.oauth2_data.get("client_id", None),
             "state": self.oauth2_data.get("state", None),
             "response_type": self.oauth2_data.get("response_type", None),
+            # toegevoegd
+            "response_mode": self.oauth2_data.get("response_mode", None),
             "code_challenge": self.oauth2_data.get("code_challenge", None),
             "code_challenge_method": self.oauth2_data.get("code_challenge_method", None),
             "claims": self.oauth2_data.get("claims", None),
@@ -119,6 +121,8 @@ class AuthorizationView(BaseAuthorizationView, FormView):
             "client_id": form.cleaned_data.get("client_id"),
             "redirect_uri": form.cleaned_data.get("redirect_uri"),
             "response_type": form.cleaned_data.get("response_type", None),
+            # toegevoegd
+            "response_mode": form.cleaned_data.get("response_mode", None),
             "state": form.cleaned_data.get("state", None),
         }
         if form.cleaned_data.get("code_challenge", False):
@@ -140,9 +144,12 @@ class AuthorizationView(BaseAuthorizationView, FormView):
         except OAuthToolkitError as error:
             return self.error_response(error, application)
 
-        self.success_url = uri
-        log.debug("Success url for the request: {0}".format(self.success_url))
-        return self.redirect(self.success_url, application)
+        if uri:
+            self.success_url = uri
+            log.debug("Success url for the request: {0}".format(self.success_url))
+            return self.redirect(self.success_url, application)
+        else:
+            return HttpResponse(body)
 
     def get(self, request, *args, **kwargs):
         try:
@@ -176,6 +183,9 @@ class AuthorizationView(BaseAuthorizationView, FormView):
             kwargs["nonce"] = credentials["nonce"]
         if "claims" in credentials:
             kwargs["claims"] = json.dumps(credentials["claims"])
+        # toegevoegd
+        if "response_mode" in credentials:
+            kwargs["response_mode"] = credentials["response_mode"]
 
         self.oauth2_data = kwargs
         # following two loc are here only because of https://code.djangoproject.com/ticket/17795
@@ -292,7 +302,7 @@ class TokenView(OAuthLibMixin, View):
     * Client credentials
     """
 
-    @method_decorator(sensitive_post_parameters("password", "client_secret"))
+    @method_decorator(sensitive_post_parameters("password"))
     def post(self, request, *args, **kwargs):
         url, headers, body, status = self.create_token_response(request)
         if status == 200:
