@@ -9,9 +9,15 @@ class LocGroup(models.Model):
     def __str__(self):
         return self.name
 
-class User(AbstractUser):
+class ApplicatieUser(models.Model):
     applicatie = models.ForeignKey(Application, related_name='applicatie_users', on_delete=models.CASCADE, null=True,
                                    blank=True)
+
+    class Meta:
+        abstract = True
+
+
+class User(AbstractUser, ApplicatieUser):
     personeelsnummer = models.CharField(max_length=6, null=True, blank=True)
     locgroup = models.ManyToManyField(LocGroup, related_name='user_set', blank=True)
 
