@@ -21,8 +21,15 @@ class User(AbstractUser, ApplicatieUser):
     personeelsnummer = models.CharField(max_length=6, null=True, blank=True)
     locgroup = models.ManyToManyField(LocGroup, related_name='user_set', blank=True)
 
-class SyncPoint(models.Model):
+
+class ApplicatieSyncPoint(models.Model):
     applicatie = models.OneToOneField(Application, related_name='applicatie_syncpoint', on_delete=models.CASCADE)
+
+    class Meta:
+        abstract = True
+
+
+class SyncPoint(ApplicatieSyncPoint):
     active = models.BooleanField(default=False)
     dirty =models.BooleanField(default=False)
     url = models.URLField(max_length=255, blank=True, null=True)
