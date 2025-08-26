@@ -3,7 +3,8 @@ from django.contrib.auth.models import AbstractUser, Group
 from oauth2_provider.models import Application
 
 class LocGroup(models.Model):
-    applicatie = models.ForeignKey(Application, related_name='applicatie_groups', on_delete=models.CASCADE)
+    applicatie = models.ForeignKey(Application, related_name='applicatie_groups', on_delete=models.CASCADE, null=True,
+                                   blank=True)
     name = models.CharField(max_length=255, blank=True, null=True)
 
     def __str__(self):
@@ -18,7 +19,8 @@ class User(AbstractUser):
 
 
 class SyncPoint(models.Model):
-    applicatie = models.OneToOneField(Application, related_name='applicatie_syncpoint', on_delete=models.CASCADE)
+    applicatie = models.OneToOneField(Application, related_name='applicatie_syncpoint', on_delete=models.CASCADE,  null=True,
+                                   blank=True)
     active = models.BooleanField(default=False)
     dirty =models.BooleanField(default=False)
     url = models.URLField(max_length=255, blank=True, null=True)
