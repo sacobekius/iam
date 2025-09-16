@@ -3,7 +3,7 @@ from django.contrib.auth.models import AbstractUser, Group
 from oauth2_provider.models import Application
 
 class LocGroup(models.Model):
-    applicatie = models.ForeignKey(Application, related_name='applicatie_groups', on_delete=models.CASCADE, null=True,
+    applicatie = models.ForeignKey("oauth2_provider.Application", related_name='applicatie_groups', on_delete=models.CASCADE, null=True,
                                    blank=True)
     name = models.CharField(max_length=255, blank=True, null=True)
 
@@ -12,14 +12,14 @@ class LocGroup(models.Model):
 
 
 class User(AbstractUser):
-    applicatie = models.ForeignKey(Application, related_name='applicatie_users', on_delete=models.CASCADE, null=True,
+    applicatie = models.ForeignKey("oauth2_provider.Application", related_name='applicatie_users', on_delete=models.CASCADE, null=True,
                                    blank=True)
     personeelsnummer = models.CharField(max_length=6, null=True, blank=True)
     locgroup = models.ManyToManyField(LocGroup, related_name='user_set', blank=True)
 
 
 class SyncPoint(models.Model):
-    applicatie = models.OneToOneField(Application, related_name='applicatie_syncpoint', on_delete=models.CASCADE,  null=True,
+    applicatie = models.OneToOneField("oauth2_provider.Application", related_name='applicatie_syncpoint', on_delete=models.CASCADE,  null=True,
                                    blank=True)
     active = models.BooleanField(default=False)
     dirty =models.BooleanField(default=False)
