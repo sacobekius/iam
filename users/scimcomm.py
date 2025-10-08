@@ -105,9 +105,12 @@ class SCIMObjects:
 @receiver(pre_delete, sender=LocGroup)
 def group_handler(sender, instance, **kwargs):
     relevant_syncpoints = []
-    for user in instance.user_set.all():
-        if user.applicatie.applicatie_syncpoint not in relevant_syncpoints:
-            relevant_syncpoints.append(user.applicatie.applicatie_syncpoint)
+    try:
+        for user in instance.user_set.all():
+            if user.applicatie.applicatie_syncpoint not in relevant_syncpoints:
+                relevant_syncpoints.append(user.applicatie.applicatie_syncpoint)
+    except ValueError:
+        pass
     for syncpoint in relevant_syncpoints:
         to_sync = SCIMProcess(syncpoint)
         to_sync.process()
