@@ -53,7 +53,5 @@ class Command(BaseCommand):
                         group.save()
         except FileNotFoundError:
             print(f"Bestand {options['gebruikers']} niet gevonden")
-        applicatie.applicatie_syncpoint.active = True
-        applicatie.applicatie_syncpoint.save()
         client = SCIMProcess(applicatie.applicatie_syncpoint)
         client.process()
