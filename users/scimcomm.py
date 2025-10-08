@@ -197,13 +197,16 @@ def user_pre_handler(sender, instance, **kwargs):
     if 'action' in kwargs.keys() and kwargs['action'] in ['pre_add', 'pre_remove']:
         return
     if type(instance) == User and instance.applicatie and hasattr(instance.applicatie, 'applicatie_syncpoint'):
-        curr_user = User.objects.get(id=instance.id)
-        instance.applicatie.applicatie_syncpoint.dirty |= curr_user.username != instance.username or \
-                curr_user.first_name != instance.first_name or \
-                curr_user.last_name != instance.last_name or \
-                curr_user.email != instance.email or \
-                curr_user.is_active != instance.is_active or \
-                curr_user.personeelsnummer != instance.personeelsnummer
+        try:
+            curr_user = User.objects.get(id=instance.id)
+            instance.applicatie.applicatie_syncpoint.dirty |= curr_user.username != instance.username or \
+                    curr_user.first_name != instance.first_name or \
+                    curr_user.last_name != instance.last_name or \
+                    curr_user.email != instance.email or \
+                    curr_user.is_active != instance.is_active or \
+                    curr_user.personeelsnummer != instance.personeelsnummer
+        except User.DoesNotExist:
+            instance.applicatie.applicatie_syncpoint.dirty |= True
         instance.applicatie.applicatie_syncpoint.save()
 
 @receiver(post_save, sender=User)
