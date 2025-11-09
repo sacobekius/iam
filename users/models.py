@@ -12,15 +12,15 @@ class LocGroup(models.Model):
 
 
 class User(AbstractUser):
-    applicatie = models.ForeignKey("oauth2_provider.Application", related_name='applicatie_users', on_delete=models.CASCADE, null=True,
-                                   blank=True)
+    applicatie = models.ForeignKey("oauth2_provider.Application", related_name='applicatie_users',
+                                   on_delete=models.CASCADE, null=True, blank=True)
     personeelsnummer = models.CharField(max_length=6, null=True, blank=True)
     locgroup = models.ManyToManyField(LocGroup, related_name='user_set', blank=True)
 
 
 class SyncPoint(models.Model):
-    applicatie = models.OneToOneField("oauth2_provider.Application", related_name='applicatie_syncpoint', on_delete=models.CASCADE,  null=True,
-                                   blank=True)
+    applicatie = models.OneToOneField("oauth2_provider.Application", related_name='applicatie_syncpoint',
+                                      on_delete=models.CASCADE,  null=True, blank=True)
     active = models.BooleanField(default=False)
     dirty =models.BooleanField(default=False)
     url = models.URLField(max_length=255, blank=True, null=True)
@@ -30,3 +30,7 @@ class SyncPoint(models.Model):
     last_response = models.JSONField(blank=True, null=True)
     last_result = models.TextField(blank=True, null=True)
 
+class ApplicatieSleutel(models.Model):
+    applicatie = models.OneToOneField("oauth2_provider.Application", related_name='applicatie_sleutel',
+                                      on_delete=models.CASCADE, null=True, blank=True)
+    password = models.CharField(max_length=128, blank=True, null=True)

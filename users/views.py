@@ -2,6 +2,7 @@ from django.db import transaction
 from django.http import HttpResponseNotFound, HttpResponseRedirect, JsonResponse, HttpResponseNotAllowed, \
     HttpResponseServerError
 from django.contrib.auth import logout, login
+from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, reverse
 from django.views import View
 
@@ -11,6 +12,7 @@ from users.models import User, LocGroup
 
 from users.scimcomm import *
 
+@login_required(login_url='accounts/login')
 def iam_root(request):
     applications = []
     for application in Application.objects.all():
@@ -83,7 +85,7 @@ def new_user(request, *args, **kwargs):
         user = User.objects.get(username=new_name)
     except User.DoesNotExist:
         user = User.objects.create(applicatie=applicatie)
-        user.username = f'new_{applicatie.name}'
+        user.username = new_name
         user.is_staff = False
         user.is_active = True
         user.save()
