@@ -33,6 +33,7 @@ urlpatterns = [
          name="oidc-connect-discovery-info"),
 
     path("o/authorize/oauth2/v2.0/logout/", RPInitiatedLogoutView.as_view(), name="rp-initiated-logout"),
+    path('testusers/login/', LoginView.as_view(), name="testlogin"),
     path('accounts/login/', LoginView.as_view(), name="testlogin"),
     path('<str:applicatie>/users/', list_users, name='user-list'),
     path('<str:applicatie>/newuser/', new_user, name='new-user'),

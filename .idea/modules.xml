@@ -3,7 +3,6 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/.idea/IAM.iml" filepath="$PROJECT_DIR$/.idea/IAM.iml" />
-      <module fileurl="file://$PROJECT_DIR$/../hkabbo/hkabbo/.idea/hkabbo.iml" filepath="$PROJECT_DIR$/../hkabbo/hkabbo/.idea/hkabbo.iml" />
     </modules>
   </component>
 </project>
