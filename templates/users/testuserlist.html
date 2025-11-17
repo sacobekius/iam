@@ -2,25 +2,52 @@
 
 {% block content %}
     <h2>
-        Fictieve accounts, gebruik alleen met fictieve data
+        ETI-login: Fictieve accounts, gebruik alleen met fictieve data
     </h2>
     <table>
+        <tr>
+            <th>
+                Naam
+            </th>
+            <th>
+                Wachtwoord
+            </th>
+            <th>
+                Actie
+            </th>
+            <th>
+                Rollen
+            </th>
+        </tr>
         {% for user in usergrouplist %}
         <tr>
-        <td>
-            <form method="post" id={{ user.form_id }} action="{% url 'testlogin' %}">
-                {% csrf_token %}
-                <input type="hidden" name="next" value={{ next }}>
-                <input type="hidden" name="userid" value={{ user.userid }}>
-                <button class="gwknop" type="submit" form={{ user.form_id }} name="event" value="login">Login</button>
-            </form>
-        </td>
-        <td>
-            {{ user.username }}
-        </td>
-        <td class="rolhorizontaal">
-            {{ user.groups }}
-        </td>
+            <td>
+                {{ user.username }}
+            </td>
+            <td style="min-width: 100px">
+                {% if user.usable_password %}
+                <label>
+                    <input form={{ user.form_id }} type="password" name="password">
+                </label>
+                {% else %}
+                geen
+                {% endif %}
+            </td>
+            <td>
+                <form method="post" id={{ user.form_id }} action="{% url 'testlogin' %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="next" value={{ next }}>
+                    <input type="hidden" name="userid" value={{ user.userid }}>
+                    <button class="gwknop" type="submit" form={{ user.form_id }} name="event" value="login">Login</button>
+                </form>
+            </td>
+            <td class="rolhorizontaal">
+                {% if user.is_staff %}
+                    ETI Beheerder
+                {% else %}
+                    {{ user.groups }}
+                {% endif %}
+            </td>
         </tr>
         {% endfor %}
     </table>

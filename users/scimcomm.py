@@ -25,7 +25,6 @@ class SCIMComm:
     def __init__(self, sync_point):
         self.sync_point = sync_point
         self.session = requests.Session()
-        self.session.verify = False
         self.state = {}
         self.session.headers.update({
             'Authorization': 'Bearer %s' % self.sync_point.auth_token,

@@ -1,4 +1,7 @@
+from django.contrib.admin.views.decorators import staff_member_required
+from django.contrib.auth.mixins import PermissionRequiredMixin, AccessMixin
 from django.db import transaction
+from django.contrib.auth.hashers import check_password, is_password_usable, make_password
 from django.http import HttpResponseNotFound, HttpResponseRedirect, JsonResponse, HttpResponseNotAllowed, \
     HttpResponseServerError
 from django.contrib.auth import logout, login
@@ -8,7 +11,7 @@ from django.views import View
 
 from oauth2_provider.models import Application
 from users.forms import UserForm, LocGroupsForm
-from users.models import User, LocGroup
+from users.models import User, LocGroup, ApplicatieSleutel
 
 from users.scimcomm import *
 
@@ -17,33 +20,41 @@ def iam_root(request):
     applications = []
     for application in Application.objects.all():
         applications.append({'name': application.name})
-    return render(request, 'users/root.html', { 'applications': applications })
+    return render(request, 'users/root.html', {
+        'applications': applications,
+        'is_staff': request.user.is_staff,
+    })
 
 
 class LoginView(View):
 
-    def get(self, *args, **kwargs):
-
-        next = args[0].GET.get('next', '/')
-
-        usergrouplist = []
-        users = User.objects.filter(is_active=True).filter(is_staff=False).order_by('username')
-
+    @staticmethod
+    def usergrouplist():
+        users = User.objects.filter(is_active=True).order_by('-is_staff', 'username')
         for user in users:
-            usergrouplist.append(
+            try:
+                usable_password = user.is_staff or (user.applicatie is not None and user.applicatie.applicatie_sleutel is not None and is_password_usable(user.applicatie.applicatie_sleutel.password))
+            except:
+                usable_password = False
+            yield(
                 {
                     'username': user.username,
                     'userid': user.id,
+                    'is_staff': user.is_staff,
+                    'usable_password': usable_password,
                     'form_id': f'"form_{user.id}"',
-                    'groups': ', '.join(map(lambda g : g.name, user.locgroup.all())),
+                    'groups': ', '.join(map(lambda g: g.name, user.locgroup.all())),
                 }
             )
 
+    def get(self, *args, **kwargs):
+
+        next = args[0].GET.get('next', '/')
         return render(
             self.request,
             'users/testuserlist.html',
             {
-                'usergrouplist': usergrouplist,
+                'usergrouplist': self.usergrouplist(),
                 'next': next,
             }
         )
@@ -54,6 +65,7 @@ class LoginView(View):
         try:
             next = self.request.POST.get('next')
             userid = self.request.POST.get('userid')
+            password = self.request.POST.get('password')
         except KeyError:
             return HttpResponseNotFound()
 
@@ -62,13 +74,28 @@ class LoginView(View):
         except User.DoesNotExist:
             return HttpResponseNotFound()
 
-        login(self.request, user)
+        if user.applicatie and user.applicatie.applicatie_sleutel:
+            encoded = user.applicatie.applicatie_sleutel.password
+        else:
+            encoded = user.password
 
-        return HttpResponseRedirect(next)
+        if check_password(password, encoded):
+            login(self.request, user)
+            return HttpResponseRedirect(next)
+        else:
+            return render(
+                self.request,
+                'users/testuserlist.html',
+                {
+                    'usergrouplist': self.usergrouplist(),
+                    'next': next,
+                }
+            )
 
+
+@login_required(login_url='accounts/login')
 def list_users(request, *args, **kwargs):
     try:
-
         return render(request,
                    'users/user_list.html',
                    {
@@ -78,6 +105,7 @@ def list_users(request, *args, **kwargs):
     except User.DoesNotExist:
         return HttpResponseNotFound('User or applcation does not exist')
 
+@login_required(login_url='accounts/login')
 def new_user(request, *args, **kwargs):
     applicatie = Application.objects.get(name=kwargs['applicatie'])
     new_name = f'new_{applicatie.name}'
@@ -91,6 +119,7 @@ def new_user(request, *args, **kwargs):
         user.save()
     return HttpResponseRedirect(reverse('user-detail', args=(user.id,)))
 
+@login_required(login_url='accounts/login')
 def user_delete(request, *args, **kwargs):
     try:
         user = User.objects.get(id=kwargs['userid'])
@@ -100,8 +129,8 @@ def user_delete(request, *args, **kwargs):
     except (User.DoesNotExist, KeyError):
         return HttpResponseNotFound('User does not exist')
 
-class UserView(View):
-
+class UserView(AccessMixin, View):
+    login_url='accounts/login'
     def get_user(self, *args, **kwargs):
         try:
             return User.objects.get(id=kwargs['userid'])
@@ -143,6 +172,7 @@ class UserView(View):
                           })
 
 
+@login_required(login_url='accounts/login')
 def edit_groups(request, *args, **kwargs):
     try:
         applicatie = Application.objects.get(name=kwargs['applicatie'])
@@ -162,8 +192,45 @@ def edit_groups(request, *args, **kwargs):
     return None
 
 
-class GroupView(View):
+class GroupView(PermissionRequiredMixin, View):
+    permission_required = 'staff'
+    def get(self, *args, **kwargs):
+        return render(self.request, 'users/group.html')
+
+
+class AppPasswordView(PermissionRequiredMixin, View):
+    permission_required = 'staff'
 
     def get(self, *args, **kwargs):
+        try:
+            applicatie = Application.objects.get(name=kwargs['applicatie'])
+        except (Application.DoesNotExist, KeyError):
+            return HttpResponseNotFound('Applicatie does not exist')
+        try:
+            old_encoded_password = applicatie.applicatie_sleutel.password
+        except ApplicatieSleutel.DoesNotExist:
+            applicatie.applicatie_sleutel = ApplicatieSleutel()
+            applicatie.applicatie_sleutel.save()
+            applicatie.save()
 
-        return render(self.request, 'users/group.html')
+        return render(self.request, 'users/set_app_password', {
+            'applicatie': applicatie.name,
+            'message': '',
+        })
+
+    def post(self, *args, **kwargs):
+        try:
+            password = self.request.POST.get('password')
+            checkpassword = self.request.POST.get('checkpassword')
+        except KeyError:
+            return HttpResponseNotFound()
+        applicatie = Application.objects.get(name=kwargs['applicatie'])
+        if password != checkpassword:
+             return render(self.request, 'users/set_app_password', {
+                 'applicatie': applicatie.name,
+                 'message': 'Wachtwoorden zijn niet gelijk',
+             })
+        else:
+            applicatie.applicatie_sleutel.password = make_password(password)
+            applicatie.applicatie_sleutel.save()
+            return HttpResponseRedirect(reverse('iam-root'))

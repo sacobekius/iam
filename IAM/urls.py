@@ -19,7 +19,8 @@ from django.urls import include, path
 from oauth2_provider import urls as oauth2_urls
 from oauth2_provider.views import ConnectDiscoveryInfoView, RPInitiatedLogoutView
 
-from users.views import iam_root, LoginView, list_users, UserView, edit_groups, GroupView, new_user, user_delete
+from users.views import (iam_root, LoginView, list_users, UserView, edit_groups, GroupView,
+                         new_user, user_delete, AppPasswordView)
 
 urlpatterns = [
     path('', iam_root, name='iam-root'),
@@ -32,12 +33,12 @@ urlpatterns = [
          name="oidc-connect-discovery-info"),
 
     path("o/authorize/oauth2/v2.0/logout/", RPInitiatedLogoutView.as_view(), name="rp-initiated-logout"),
-    path('testusers/login/', LoginView.as_view(), name="testlogin"),
     path('accounts/login/', LoginView.as_view(), name="testlogin"),
     path('<str:applicatie>/users/', list_users, name='user-list'),
     path('<str:applicatie>/newuser/', new_user, name='new-user'),
     path('users/<int:userid>/', UserView.as_view(), name='user-detail'),
     path('users/<int:userid>/delete/', user_delete, name='user-delete'),
     path('<str:applicatie>/groups/', edit_groups, name='edit-groups'),
+    path('<str:applicatie>/password/', AppPasswordView.as_view(), name='set-app-password'),
     path('groups/<int:groupid>/', GroupView.as_view(), name='group-detail'),
 ]

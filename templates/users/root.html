@@ -1,14 +1,36 @@
 {% extends "base.html" %}
 
 {% block content %}
+    {% if is_staff %}
+    <form method="get" action="/admin">
+        <input class="gwknop" type="submit" value="Admin site">
+    </form>
+    {% endif %}
+    <br/><br/>
+    <table>
     {% for application in applications %}
-        <b>{{ application.name }}</b>:
-        <form method="get" action="{% url 'user-list' applicatie=application.name %}">
-            <input type="submit" value="Gebruikers {{ application.name }}">
-        </form>
-        <form method="get" action="{% url 'edit-groups' applicatie=application.name %}">
-            <input type="submit" value="Groepen {{ application.name }}">
-        </form>
+        <tr>
+            <td>
+                <b>{{ application.name }}</b>
+            </td>
+            <td>
+                <form method="get" action="{% url 'user-list' applicatie=application.name %}">
+                    <input class="gwknop" type="submit" value="Gebruikers">
+                </form>
+            </td>
+            <td>
+                <form method="get" action="{% url 'edit-groups' applicatie=application.name %}">
+                    <input class="gwknop" type="submit" value="Groepen">
+                </form>
+            </td>
+            {% if is_staff %}
+            <td>
+                <form method="get" action="{% url 'set-app-password' applicatie=application.name %}">
+                    <input class="gwknop" type="submit" value="Wachtwoord">
+                </form>
+            </td>
+            {% endif %}
+        </tr>
     {% endfor %}
-
+    </table>
 {% endblock %}

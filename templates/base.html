@@ -30,7 +30,12 @@
                 {% block content %}
                     if you see this, something is wrong!
                 {% endblock content %}
-    </div>
+       <br/><br/>
+       <form method="get" action="/o/authorize/oauth2/v2.0/logout/">
+           <input class="gwknop" type="submit" value="Afmelden">
+       </form>
+   </div>
+
 </div>
 
 </body>
