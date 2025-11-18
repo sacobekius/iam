@@ -56,6 +56,7 @@ class LoginView(View):
             {
                 'usergrouplist': self.usergrouplist(),
                 'next': next,
+                'message': 'Kies een van de gebruikers om in te loggen.',
             }
         )
 
@@ -93,6 +94,7 @@ class LoginView(View):
                 {
                     'usergrouplist': self.usergrouplist(),
                     'next': next,
+                    'message': 'Het wachtwoord hoort niet bij de gekozen gebruiker.'
                 }
             )
 
