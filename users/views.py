@@ -74,12 +74,16 @@ class LoginView(View):
         except User.DoesNotExist:
             return HttpResponseNotFound()
 
-        if user.applicatie and user.applicatie.applicatie_sleutel:
-            encoded = user.applicatie.applicatie_sleutel.password
-        else:
+        encoded = None
+        try:
+            if user.applicatie and user.applicatie.applicatie_sleutel:
+                encoded = user.applicatie.applicatie_sleutel.password
+        except:
+            pass
+        if user.is_staff:
             encoded = user.password
 
-        if check_password(password, encoded):
+        if encoded is None or check_password(password, encoded):
             login(self.request, user)
             return HttpResponseRedirect(next)
         else:
