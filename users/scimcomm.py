@@ -179,7 +179,7 @@ class SCIMGroups(SCIMObjects):
                     })
                     self.objects[key] = self.endpoint.get(f'Groups/{key}')
         user_list = []
-        for user in users:
+        for user in users.filter(applicatie__name__exact=self.endpoint.sync_point.applicatie.name):
             if user.id not in users_found:
                 user_list.append({"value": f"{self.process.users.getbyexternalid(str(user.id))}"})
         if len(user_list) > 0:
