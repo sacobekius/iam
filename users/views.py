@@ -35,7 +35,7 @@ class LoginView(View):
         if applicatie_id:
             users = User.objects.filter(applicatie_id=applicatie_id, is_active=True).order_by('-is_staff', 'username')
         else:
-            users = User.objects.filter(is_active=True).order_by('-is_staff', 'username')
+            users = User.objects.filter(is_superuser=True, is_active=True).order_by('-is_staff', 'username')
         for user in users:
             try:
                 usable_password = user.is_staff or (user.applicatie is not None and user.applicatie.applicatie_sleutel is not None and is_password_usable(user.applicatie.applicatie_sleutel.password))
@@ -59,10 +59,14 @@ class LoginView(View):
             client_id = parse.parse_qs(parse.urlparse(next).query)['client_id'][0]
             applicatie_id = Application.objects.get(client_id=client_id).id
             applicatie_naam = Application.objects.get(client_id=client_id).name
+            message = f'Kies een van de gebruikers om in te loggen bij {applicatie_naam}.'
         except (KeyError, Application.DoesNotExist):
             next = '/'
             applicatie_id = None
-            applicatie_naam = 'fout -- configuratie inconsistent'
+            message = 'Configuratie inconsistent'
+
+        if next == '/':
+            message = 'Kies een gebruiker om in te loggen voor het beheer van ETI'
 
         return render(
             self.request,
@@ -70,7 +74,7 @@ class LoginView(View):
             {
                 'usergrouplist': self.usergrouplist(applicatie_id),
                 'next': next,
-                'message': f'Kies een van de gebruikers om in te loggen bij {applicatie_naam}.',
+                'message': message,
             }
         )
 
