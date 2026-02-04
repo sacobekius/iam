@@ -55,13 +55,12 @@ class LoginView(View):
     def get(self, *args, **kwargs):
 
         try:
-            next = args[0].GET.get('next')
+            next = args[0].GET.get('next', '/')
             client_id = parse.parse_qs(parse.urlparse(next).query)['client_id'][0]
             applicatie_id = Application.objects.get(client_id=client_id).id
             applicatie_naam = Application.objects.get(client_id=client_id).name
             message = f'Kies een van de gebruikers om in te loggen bij {applicatie_naam}.'
         except (KeyError, Application.DoesNotExist):
-            next = '/'
             applicatie_id = None
             message = 'Configuratie inconsistent'
 
