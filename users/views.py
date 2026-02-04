@@ -15,6 +15,8 @@ from users.models import User, LocGroup, ApplicatieSleutel
 
 from users.scimcomm import *
 
+from urllib import parse
+
 @login_required(login_url='accounts/login')
 def iam_root(request):
     applications = []
@@ -29,8 +31,11 @@ def iam_root(request):
 class LoginView(View):
 
     @staticmethod
-    def usergrouplist():
-        users = User.objects.filter(is_active=True).order_by('-is_staff', 'username')
+    def usergrouplist(applicatie_id=None):
+        if applicatie_id:
+            users = User.objects.filter(applicatie_id=applicatie_id, is_active=True).order_by('-is_staff', 'username')
+        else:
+            users = User.objects.filter(is_active=True).order_by('-is_staff', 'username')
         for user in users:
             try:
                 usable_password = user.is_staff or (user.applicatie is not None and user.applicatie.applicatie_sleutel is not None and is_password_usable(user.applicatie.applicatie_sleutel.password))
@@ -49,14 +54,23 @@ class LoginView(View):
 
     def get(self, *args, **kwargs):
 
-        next = args[0].GET.get('next', '/')
+        try:
+            next = args[0].GET.get('next')
+            client_id = parse.parse_qs(parse.urlparse(next).query)['client_id'][0]
+            applicatie_id = Application.objects.get(client_id=client_id).id
+            applicatie_naam = Application.objects.get(client_id=client_id).name
+        except (KeyError, Application.DoesNotExist):
+            next = '/'
+            applicatie_id = None
+            applicatie_naam = 'fout -- configuratie inconsistent'
+
         return render(
             self.request,
             'users/testuserlist.html',
             {
-                'usergrouplist': self.usergrouplist(),
+                'usergrouplist': self.usergrouplist(applicatie_id),
                 'next': next,
-                'message': 'Kies een van de gebruikers om in te loggen.',
+                'message': f'Kies een van de gebruikers om in te loggen bij {applicatie_naam}.',
             }
         )
 
