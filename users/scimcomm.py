@@ -216,7 +216,7 @@ def user_pre_handler(sender, instance, **kwargs):
     if type(instance) == User and instance.applicatie and hasattr(instance.applicatie, 'applicatie_syncpoint'):
         try:
             curr_user = User.objects.get(id=instance.id)
-            instance.applicatie.applicatie_syncpoint.dirty |= curr_user.username != instance.username or \
+            instance.applicatie.applicatie_syncpoint.dirty |= curr_user.username != instance.locusername or \
                                                               curr_user.first_name != instance.first_name or \
                                                               curr_user.last_name != instance.last_name or \
                                                               curr_user.email != instance.email or \
@@ -250,7 +250,7 @@ class SCIMUsers(SCIMObjects):
         scim_representation = self.objects[key]
         if (
                 scim_representation['displayName'] != f'{user.first_name} {user.last_name}' or
-                scim_representation['userName'] != user.username or
+                scim_representation['userName'] != user.locusername or
                 scim_representation['functionNumber'] != str(user.personeelsnummer) or
                 scim_representation['active'] != user.is_active
         ):
@@ -259,7 +259,7 @@ class SCIMUsers(SCIMObjects):
                 "Operations": [
                     {
                         "op": "replace",
-                        "value": user.username,
+                        "value": user.locusername,
                         "path": "userName",
                     },
                     {
@@ -298,7 +298,7 @@ class SCIMUsers(SCIMObjects):
             "lastModified": scimtime(datetime.datetime.now()),
             "schemas": ["urn:ietf:params:scim:schemas:core:2.0:User"],
             "externalId": str(user.id),
-            "userName": user.username,
+            "userName": user.locusername,
             "functionNumber": str(user.personeelsnummer),
             "displayName": f'{user.first_name} {user.last_name}',
         }

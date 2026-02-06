@@ -43,7 +43,7 @@ class LoginView(View):
                 usable_password = False
             yield(
                 {
-                    'username': user.username,
+                    'username': user.locusername,
                     'userid': user.id,
                     'is_staff': user.is_staff,
                     'usable_password': usable_password,
@@ -54,9 +54,9 @@ class LoginView(View):
 
     def get(self, *args, **kwargs):
 
+        nexturl = args[0].GET.get('next', '/')
         try:
-            next = args[0].GET.get('next', '/')
-            client_id = parse.parse_qs(parse.urlparse(next).query)['client_id'][0]
+            client_id = parse.parse_qs(parse.urlparse(nexturl).query)['client_id'][0]
             applicatie_id = Application.objects.get(client_id=client_id).id
             applicatie_naam = Application.objects.get(client_id=client_id).name
             message = f'Kies een van de gebruikers om in te loggen bij {applicatie_naam}.'
@@ -64,7 +64,7 @@ class LoginView(View):
             applicatie_id = None
             message = 'Configuratie inconsistent'
 
-        if next == '/':
+        if nexturl == '/':
             message = 'Kies een gebruiker om in te loggen voor het beheer van ETI'
 
         return render(
@@ -72,7 +72,7 @@ class LoginView(View):
             'users/testuserlist.html',
             {
                 'usergrouplist': self.usergrouplist(applicatie_id),
-                'next': next,
+                'next': nexturl,
                 'message': message,
             }
         )
@@ -133,10 +133,10 @@ def new_user(request, *args, **kwargs):
     applicatie = Application.objects.get(name=kwargs['applicatie'])
     new_name = f'new_{applicatie.name}'
     try:
-        user = User.objects.get(username=new_name)
+        user = User.getbylocusername(applicatie.name, new_name)
     except User.DoesNotExist:
-        user = User.objects.create(applicatie=applicatie)
-        user.username = new_name
+        user = User.objects.create(applicatie=applicatie, username=f'{applicatie.name}_{new_name}')
+        user.locusername = new_name
         user.is_staff = False
         user.is_active = True
         user.save()
@@ -168,7 +168,7 @@ class UserView(AccessMixin, View):
         if type(user) is not User:
             return HttpResponseServerError('')
 
-        userform = UserForm(instance=user)
+        userform = UserForm(instance=user, initial={'locusername': user.locusername})
 
         return render(self.request,
                       'users/user.html',

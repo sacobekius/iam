@@ -8,17 +8,11 @@
         <th>
             Gebruikersnaam
         </th>
-        <th>
-            Applicatie
-        </th>
         {% for user in user_list %}
         <tr>
-        <td>
-            <a href="{% url 'user-detail' userid=user.id %}">{{ user.username }}</a>
-        </td>
-        <td>
-            {{ user.applicatie.name }}
-        </td>
+            <td>
+                <a href="{% url 'user-detail' userid=user.id %}">{{ user.locusername }}</a>
+            </td>
         </tr>
         {% endfor %}
     </table>

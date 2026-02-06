@@ -32,9 +32,10 @@ class Command(BaseCommand):
                         else:
                             personeelsnummer = None
                         try:
-                            user = User.objects.get(username=row['gebruiker'])
+                            user = User.getbylocusername(row['gebruiker'])
                         except User.DoesNotExist:
-                            user = User.objects.create(username=row['gebruiker'], applicatie=applicatie)
+                            user = User.objects.create(applicatie=applicatie)
+                            user.locusername = row['gebruiker']
                             user.is_staff = False
                             user.is_active = True
                             user.first_name = row['gebruiker']

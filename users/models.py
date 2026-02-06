@@ -17,6 +17,29 @@ class User(AbstractUser):
     personeelsnummer = models.CharField(max_length=6, null=True, blank=True)
     locgroup = models.ManyToManyField(LocGroup, related_name='user_set', blank=True)
 
+    @property
+    def locusername(self):
+        if self.applicatie:
+            apnmlen = len(self.applicatie.name)
+            if self.username[:apnmlen] != self.applicatie.name:
+                self.username = self.applicatie.name + "_" + self.username
+                try:
+                    User.objects.get(username=self.username).delete()
+                except User.DoesNotExist:
+                    pass
+                self.save()
+            return self.username[apnmlen+1:]
+        else:
+            return self.username
+
+    @locusername.setter
+    def locusername(self, value):
+        if self.applicatie:
+            self.username = self.applicatie.name + '_' + value
+
+    @classmethod
+    def getbylocusername(cls, applicatie_name, locusername):
+        return User.objects.get(username=applicatie_name + "_" + locusername)
 
 class SyncPoint(models.Model):
     applicatie = models.OneToOneField("oauth2_provider.Application", related_name='applicatie_syncpoint',
