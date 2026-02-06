@@ -7,6 +7,9 @@ class LocGroup(models.Model):
                                    blank=True)
     name = models.CharField(max_length=255, blank=True, null=True)
 
+    class Meta:
+        ordering = ['name']
+
     def __str__(self):
         return self.name
 
@@ -15,7 +18,10 @@ class User(AbstractUser):
     applicatie = models.ForeignKey("oauth2_provider.Application", related_name='applicatie_users',
                                    on_delete=models.CASCADE, null=True, blank=True)
     personeelsnummer = models.CharField(max_length=6, null=True, blank=True)
-    locgroup = models.ManyToManyField(LocGroup, related_name='user_set', blank=True)
+    locgroup = models.ManyToManyField(LocGroup, related_name='user_set', verbose_name='Groepen', blank=True)
+
+    class Meta:
+        ordering = ['username']
 
     @property
     def locusername(self):

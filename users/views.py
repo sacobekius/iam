@@ -203,16 +203,15 @@ def edit_groups(request, *args, **kwargs):
         return HttpResponseNotFound('Applicatie does not exist')
     if request.method == 'GET':
         groupsform = LocGroupsForm(instance=applicatie)
-        return render(request, 'users/edit_groups.html', {
-            'applicatie': applicatie.name,
-            'groupsform': groupsform
-        })
     elif request.method == 'POST':
         groupsform = LocGroupsForm(request.POST, instance=applicatie)
         if groupsform.is_valid():
             groupsform.save()
             return HttpResponseRedirect(reverse('edit-groups', args=(applicatie.name,)))
-    return None
+    return render(request, 'users/edit_groups.html', {
+        'applicatie': applicatie.name,
+        'groupsform': groupsform
+    })
 
 
 class GroupView(PermissionRequiredMixin, View):

@@ -4,13 +4,13 @@ from oauth2_provider.models import Application
 from users.models import User, LocGroup
 
 
-class AddLocGroupForm(forms.ModelForm):
+class LocGroupForm(forms.ModelForm):
     class Meta:
         model = LocGroup
         fields = ('name',)
 
 
-LocGroupsForm = forms.inlineformset_factory(Application, LocGroup, form=AddLocGroupForm, extra=1, can_delete=True)
+LocGroupsForm = forms.inlineformset_factory(Application, LocGroup, form=LocGroupForm, extra=3, can_delete=True)
 
 
 class UserForm(forms.ModelForm):

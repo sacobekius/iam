@@ -6,7 +6,20 @@
     </h2>
     <form method="post" action="{% url 'edit-groups' applicatie=applicatie %}">
         {% csrf_token %}
-        {{ groupsform.as_table }}
+        {{ groupsform.management_form }}
+        <table>
+            <tr>
+                <th>Groep</th>
+                <th>Verwijder</th>
+            </tr>
+            {% for group in groupsform %}
+                <tr>
+                <td>{{ group.id }} {{ group.name.errors }}{{ group.name.as_widget }}</td>
+                <td>{{ group.DELETE.as_widget }}</td>
+                </tr>
+            {% endfor %}
+        
+        </table>
         <input class="gwknop" type="submit" value="Werk bij">
     </form>
     
