@@ -322,9 +322,12 @@ class SCIMProcess:
 
     def process(self):
         # Kans om LocGroup en Group te synchroniseren
-        for group in Group.objects.all():
+        groupsrequired = ()
+        for loc_group in LocGroup.objects.all():
+            groupname = loc_group.application.name + '_' + loc_group.name
+            groupsrequired += (groupname,)
             try:
-                loc_group = LocGroup.objects.get(name=group.name)
+                group = Group.objects.get(name=groupname)
                 for loc_group_member in loc_group.user_set.all():
                     try:
                         group.user_set.get(username=loc_group_member.username)
@@ -336,16 +339,14 @@ class SCIMProcess:
                     except User.DoesNotExist:
                         group.user_set.remove(group_member)
                 group.save()
-            except LocGroup.DoesNotExist:
-                group.delete()
-        for loc_group in LocGroup.objects.all():
-            try:
-                Group.objects.get(name=loc_group.name)
             except Group.DoesNotExist:
-                group = Group.objects.create(name=loc_group.name)
+                group = Group.objects.create(name=groupname)
                 for loc_group_member in loc_group.user_set.all():
                     group.user_set.add(loc_group_member)
                 group.save()
+        for group in Group.objects.all():
+            if group.name not in groupsrequired:
+                group.delete()
 
         # SCIM Synchronisatie
         if not self.endpoint.sync_point.active:
