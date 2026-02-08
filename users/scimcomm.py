@@ -321,6 +321,10 @@ class SCIMProcess:
         self.endpoint = SCIMComm(sync_point)
 
     def process(self):
+        if not self.endpoint.sync_point.busy:
+            return True
+        self.endpoint.sync_point.busy = True
+        self.endpoint.sync_point.save()
         # Kans om LocGroup en Group te synchroniseren
         groupsrequired = ()
         for loc_group in LocGroup.objects.all():
@@ -354,6 +358,7 @@ class SCIMProcess:
         # SCIM Synchronisatie
         if not self.endpoint.sync_point.active:
             return False
+        result = True
         try:
             self.users = SCIMUsers(self, self.endpoint)
             self.groups = SCIMGroups(self, self.endpoint)
@@ -385,8 +390,10 @@ class SCIMProcess:
                     self.groups.newSCIM(group)
 
         except EndOfProcess:
-            return False
-        return True
+            result = False
+        self.endpoint.sync_point.busy = False
+        self.endpoint.sync_point.save()
+        return result
 
     def clear(self):
         try:

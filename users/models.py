@@ -54,7 +54,8 @@ class SyncPoint(models.Model):
     application = models.OneToOneField("oauth2_provider.Application", related_name='application_syncpoint',
                                       on_delete=models.CASCADE,  null=True, blank=True)
     active = models.BooleanField(default=False)
-    dirty =models.BooleanField(default=False)
+    dirty = models.BooleanField(default=False)
+    busy = models.BooleanField(default=False)
     url = models.URLField(max_length=255, blank=True, null=True)
     auth_token = models.CharField(max_length=255, blank=True, null=True)
     last_request = models.TextField(blank=True, null=True)
