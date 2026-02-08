@@ -357,7 +357,7 @@ class SCIMProcess:
 
         # SCIM Synchronisatie
         result = False
-        if not self.endpoint.sync_point.active:
+        if self.endpoint.sync_point.active:
             result = True
             try:
                 self.users = SCIMUsers(self, self.endpoint)
