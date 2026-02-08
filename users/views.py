@@ -238,7 +238,7 @@ def edit_application(request, *args, **kwargs):
         applicationform = ApplicationForm(request.POST, instance=application)
         if applicationform.is_valid():
             applicationform.save()
-            syncpoint.syncpoint.url = applicationform.cleaned_data['spurl']
+            syncpoint.url = applicationform.cleaned_data['spurl']
             syncpoint.active = applicationform.cleaned_data['spactive']
             syncpoint.auth_token = applicationform.cleaned_data['spauth_token']
             syncpoint.save()
