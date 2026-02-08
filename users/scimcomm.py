@@ -324,26 +324,29 @@ class SCIMProcess:
         # Kans om LocGroup en Group te synchroniseren
         groupsrequired = ()
         for loc_group in LocGroup.objects.all():
-            groupname = loc_group.application.name + '_' + loc_group.name
-            groupsrequired += (groupname,)
-            try:
-                group = Group.objects.get(name=groupname)
-                for loc_group_member in loc_group.user_set.all():
-                    try:
-                        group.user_set.get(username=loc_group_member.username)
-                    except User.DoesNotExist:
+            if loc_group.application:
+                groupname = loc_group.application.name + '_' + loc_group.name
+                groupsrequired += (groupname,)
+                try:
+                    group = Group.objects.get(name=groupname)
+                    for loc_group_member in loc_group.user_set.all():
+                        try:
+                            group.user_set.get(username=loc_group_member.username)
+                        except User.DoesNotExist:
+                            group.user_set.add(loc_group_member)
+                    for group_member in group.user_set.all():
+                        try:
+                            loc_group.user_set.get(username=group_member.username)
+                        except User.DoesNotExist:
+                            group.user_set.remove(group_member)
+                    group.save()
+                except Group.DoesNotExist:
+                    group = Group.objects.create(name=groupname)
+                    for loc_group_member in loc_group.user_set.all():
                         group.user_set.add(loc_group_member)
-                for group_member in group.user_set.all():
-                    try:
-                        loc_group.user_set.get(username=group_member.username)
-                    except User.DoesNotExist:
-                        group.user_set.remove(group_member)
-                group.save()
-            except Group.DoesNotExist:
-                group = Group.objects.create(name=groupname)
-                for loc_group_member in loc_group.user_set.all():
-                    group.user_set.add(loc_group_member)
-                group.save()
+                    group.save()
+            else:
+                loc_group.delete()
         for group in Group.objects.all():
             if group.name not in groupsrequired:
                 group.delete()
