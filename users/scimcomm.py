@@ -372,7 +372,7 @@ class SCIMProcess:
                             self.users.delSCIM(scim_user)
                         else:
                             self.users.checkSCIM(user)
-                            users_found += (user.id,)
+                        users_found += (user.id,)
                     except (User.DoesNotExist, ValueError, KeyError):
                         self.users.delSCIM(scim_user)
                 for user in User.objects.filter(application__name__exact=self.endpoint.sync_point.application.name):
@@ -388,7 +388,7 @@ class SCIMProcess:
                             self.groups.delSCIM(scim_group)
                         else:
                             self.groups.checkSCIM(group)
-                            groups_found += (group.id,)
+                        groups_found += (group.id,)
                     except (LocGroup.DoesNotExist, ValueError, KeyError):
                         self.groups.delSCIM(scim_group)
                 for group in LocGroup.objects.all():
