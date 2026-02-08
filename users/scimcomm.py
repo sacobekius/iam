@@ -368,8 +368,11 @@ class SCIMProcess:
                 for scim_user in scim_user_keys:
                     try:
                         user = User.objects.get(id=self.users[scim_user]['externalId'])
-                        self.users.checkSCIM(user)
-                        users_found += (user.id,)
+                        if user.application and user.application.name != self.endpoint.sync_point.application.name:
+                            self.users.delSCIM(scim_user)
+                        else:
+                            self.users.checkSCIM(user)
+                            users_found += (user.id,)
                     except (User.DoesNotExist, ValueError, KeyError):
                         self.users.delSCIM(scim_user)
                 for user in User.objects.filter(application__name__exact=self.endpoint.sync_point.application.name):
@@ -381,8 +384,11 @@ class SCIMProcess:
                 for scim_group in scim_group_keys:
                     try:
                         group = LocGroup.objects.get(id=self.groups[scim_group]['externalId'])
-                        self.groups.checkSCIM(group)
-                        groups_found += (group.id,)
+                        if group.application and group.application.name != self.endpoint.sync_point.application.name:
+                            self.groups.delSCIM(scim_group)
+                        else:
+                            self.groups.checkSCIM(group)
+                            groups_found += (group.id,)
                     except (LocGroup.DoesNotExist, ValueError, KeyError):
                         self.groups.delSCIM(scim_group)
                 for group in LocGroup.objects.all():
