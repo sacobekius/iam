@@ -321,7 +321,7 @@ class SCIMProcess:
         self.endpoint = SCIMComm(sync_point)
 
     def process(self):
-        if not self.endpoint.sync_point.busy:
+        if self.endpoint.sync_point.busy:
             return True
         self.endpoint.sync_point.busy = True
         self.endpoint.sync_point.save()
@@ -356,41 +356,41 @@ class SCIMProcess:
                 group.delete()
 
         # SCIM Synchronisatie
+        result = False
         if not self.endpoint.sync_point.active:
-            return False
-        result = True
-        try:
-            self.users = SCIMUsers(self, self.endpoint)
-            self.groups = SCIMGroups(self, self.endpoint)
+            result = True
+            try:
+                self.users = SCIMUsers(self, self.endpoint)
+                self.groups = SCIMGroups(self, self.endpoint)
 
-            users_found = ()
-            scim_user_keys = list(self.users.keys())
-            for scim_user in scim_user_keys:
-                try:
-                    user = User.objects.get(id=self.users[scim_user]['externalId'])
-                    self.users.checkSCIM(user)
-                    users_found += (user.id,)
-                except (User.DoesNotExist, ValueError, KeyError):
-                    self.users.delSCIM(scim_user)
-            for user in User.objects.filter(application__name__exact=self.endpoint.sync_point.application.name):
-                if user.id not in users_found:
-                    self.users.newSCIM(user)
+                users_found = ()
+                scim_user_keys = list(self.users.keys())
+                for scim_user in scim_user_keys:
+                    try:
+                        user = User.objects.get(id=self.users[scim_user]['externalId'])
+                        self.users.checkSCIM(user)
+                        users_found += (user.id,)
+                    except (User.DoesNotExist, ValueError, KeyError):
+                        self.users.delSCIM(scim_user)
+                for user in User.objects.filter(application__name__exact=self.endpoint.sync_point.application.name):
+                    if user.id not in users_found:
+                        self.users.newSCIM(user)
 
-            groups_found = ()
-            scim_group_keys = list(self.groups.keys())
-            for scim_group in scim_group_keys:
-                try:
-                    group = LocGroup.objects.get(id=self.groups[scim_group]['externalId'])
-                    self.groups.checkSCIM(group)
-                    groups_found += (group.id,)
-                except (LocGroup.DoesNotExist, ValueError, KeyError):
-                    self.groups.delSCIM(scim_group)
-            for group in LocGroup.objects.all():
-                if group.id not in groups_found:
-                    self.groups.newSCIM(group)
+                groups_found = ()
+                scim_group_keys = list(self.groups.keys())
+                for scim_group in scim_group_keys:
+                    try:
+                        group = LocGroup.objects.get(id=self.groups[scim_group]['externalId'])
+                        self.groups.checkSCIM(group)
+                        groups_found += (group.id,)
+                    except (LocGroup.DoesNotExist, ValueError, KeyError):
+                        self.groups.delSCIM(scim_group)
+                for group in LocGroup.objects.all():
+                    if group.id not in groups_found:
+                        self.groups.newSCIM(group)
 
-        except EndOfProcess:
-            result = False
+            except EndOfProcess:
+                result = False
         self.endpoint.sync_point.busy = False
         self.endpoint.sync_point.save()
         return result
