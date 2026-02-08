@@ -2,9 +2,9 @@
 
 {% block content %}
     <h2>
-        Groepen voor {{ applicatie }}
+        Groepen voor {{ application }}
     </h2>
-    <form method="post" action="{% url 'edit-groups' applicatie=applicatie %}">
+    <form method="post" action="{% url 'edit-groups' application=application %}">
         {% csrf_token %}
         {{ groupsform.management_form }}
         <table>

@@ -6,9 +6,9 @@ class Command(BaseCommand):
     help = 'Verwijder registratie in endpoint volgens het SCIM-protocol'
 
     def add_arguments(self, parser):
-        parser.add_argument('applicatie', type=str, help='Applicatie waar de gebruikers voor worden verwijderd')
+        parser.add_argument('application', type=str, help='Applicatie waar de gebruikers voor worden verwijderd')
 
     def handle(self, *args, **options):
-        for sync_point in SyncPoint.objects.filter(url__isnull=False, applicatie__name=options['applicatie']):
+        for sync_point in SyncPoint.objects.filter(url__isnull=False, application__name=options['application']):
             client = SCIMProcess(sync_point)
             client.clear()

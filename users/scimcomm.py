@@ -1,5 +1,7 @@
 import requests, datetime, time
 from urllib.parse import urljoin
+
+from oauth2_provider.management.commands.createapplication import Application
 from users.models import User, LocGroup
 from django.db.models.signals import pre_save, pre_delete, m2m_changed, post_save, post_delete
 from django.dispatch import receiver
@@ -111,8 +113,13 @@ def group_handler(sender, instance, **kwargs):
     relevant_syncpoints = []
     try:
         for user in instance.user_set.all():
-            if user.applicatie.applicatie_syncpoint not in relevant_syncpoints:
-                relevant_syncpoints.append(user.applicatie.applicatie_syncpoint)
+            try:
+                if user.application:
+                    if user.application.application_syncpoint:
+                        if user.application.application_syncpoint not in relevant_syncpoints:
+                            relevant_syncpoints.append(user.application.application_syncpoint)
+            except Application.application_syncpoint.RelatedObjectDoesNotExist:
+                pass
     except ValueError:
         pass
     for syncpoint in relevant_syncpoints:
@@ -179,7 +186,7 @@ class SCIMGroups(SCIMObjects):
                     })
                     self.objects[key] = self.endpoint.get(f'Groups/{key}')
         user_list = []
-        for user in users.filter(applicatie__name__exact=self.endpoint.sync_point.applicatie.name):
+        for user in users.filter(application__name__exact=self.endpoint.sync_point.application.name):
             if user.id not in users_found:
                 user_list.append({"value": f"{self.process.users.getbyexternalid(str(user.id))}"})
         if len(user_list) > 0:
@@ -201,11 +208,11 @@ class SCIMGroups(SCIMObjects):
 @receiver(m2m_changed, sender=User.locgroup.through)
 def set_dirty_after_group_change(sender, instance, **kwargs):
     if 'action' in kwargs.keys() and kwargs['action'] in ['post_add', 'post_remove']:
-        if type(instance) == User and instance.applicatie and hasattr(instance.applicatie, 'applicatie_syncpoint'):
-            to_sync = SCIMProcess(instance.applicatie.applicatie_syncpoint)
+        if type(instance) == User and instance.application and hasattr(instance.application, 'application_syncpoint'):
+            to_sync = SCIMProcess(instance.application.application_syncpoint)
             to_sync.process()
-            instance.applicatie.applicatie_syncpoint.dirty = False
-            instance.applicatie.applicatie_syncpoint.save()
+            instance.application.application_syncpoint.dirty = False
+            instance.application.application_syncpoint.save()
 
 
 @receiver(pre_save, sender=User)
@@ -213,18 +220,18 @@ def set_dirty_after_group_change(sender, instance, **kwargs):
 def user_pre_handler(sender, instance, **kwargs):
     if 'action' in kwargs.keys() and kwargs['action'] in ['pre_add', 'pre_remove']:
         return
-    if type(instance) == User and instance.applicatie and hasattr(instance.applicatie, 'applicatie_syncpoint'):
+    if type(instance) == User and instance.application and hasattr(instance.application, 'application_syncpoint'):
         try:
             curr_user = User.objects.get(id=instance.id)
-            instance.applicatie.applicatie_syncpoint.dirty |= curr_user.username != instance.locusername or \
+            instance.application.application_syncpoint.dirty |= curr_user.username != instance.locusername or \
                                                               curr_user.first_name != instance.first_name or \
                                                               curr_user.last_name != instance.last_name or \
                                                               curr_user.email != instance.email or \
                                                               curr_user.is_active != instance.is_active or \
                                                               curr_user.personeelsnummer != instance.personeelsnummer
         except User.DoesNotExist:
-            instance.applicatie.applicatie_syncpoint.dirty |= True
-        instance.applicatie.applicatie_syncpoint.save()
+            instance.application.application_syncpoint.dirty |= True
+        instance.application.application_syncpoint.save()
 
 
 @receiver(post_save, sender=User)
@@ -232,12 +239,12 @@ def user_pre_handler(sender, instance, **kwargs):
 def user_post_handler(sender, instance, **kwargs):
     if 'action' in kwargs.keys() and kwargs['action'] in ['pre_add', 'pre_remove']:
         return
-    if type(instance) == User and instance.applicatie and hasattr(instance.applicatie, 'applicatie_syncpoint'):
-        if instance.applicatie.applicatie_syncpoint.dirty:
-            to_sync = SCIMProcess(instance.applicatie.applicatie_syncpoint)
+    if type(instance) == User and instance.application and hasattr(instance.application, 'application_syncpoint'):
+        if instance.application.application_syncpoint.dirty:
+            to_sync = SCIMProcess(instance.application.application_syncpoint)
             to_sync.process()
-            instance.applicatie.applicatie_syncpoint.dirty = False
-            instance.applicatie.applicatie_syncpoint.save()
+            instance.application.application_syncpoint.dirty = False
+            instance.application.application_syncpoint.save()
 
 
 class SCIMUsers(SCIMObjects):
@@ -356,7 +363,7 @@ class SCIMProcess:
                     users_found += (user.id,)
                 except (User.DoesNotExist, ValueError, KeyError):
                     self.users.delSCIM(scim_user)
-            for user in User.objects.filter(applicatie__name__exact=self.endpoint.sync_point.applicatie.name):
+            for user in User.objects.filter(application__name__exact=self.endpoint.sync_point.application.name):
                 if user.id not in users_found:
                     self.users.newSCIM(user)
 

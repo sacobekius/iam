@@ -9,7 +9,7 @@
     <form method="get" action="{% url 'user-delete' userid=userform.instance.id %}">
         <input type="submit" value="Verwijder">
     </form>
-    <form method="get" action="{% url 'user-list' applicatie=userform.instance.applicatie.name %}">
+    <form method="get" action="{% url 'user-list' application=userform.instance.application.name %}">
         <input type="submit" value="Lijst gebruikers">
     </form>
 {% endblock %}

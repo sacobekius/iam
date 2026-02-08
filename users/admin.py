@@ -9,17 +9,17 @@ class UserAdmin(admin.ModelAdmin):
 admin.site.register(User, UserAdmin)
 
 class LocGroupAdmin(admin.ModelAdmin):
-    list_display = ('name', 'applicatie',)
+    list_display = ('name', 'application',)
     search_fields = ('name',)
 
 admin.site.register(LocGroup, LocGroupAdmin)
 
 class SyncPointAdmin(admin.ModelAdmin):
-    list_display = ('applicatie', 'url', 'auth_token',)
+    list_display = ('application', 'url', 'auth_token',)
 
 admin.site.register(SyncPoint, SyncPointAdmin)
 
 class ApplicatieSleutelAdmin(admin.ModelAdmin):
-    list_display = ('applicatie',)
+    list_display = ('application',)
 
 admin.site.register(ApplicatieSleutel, ApplicatieSleutelAdmin)

@@ -10,18 +10,18 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument('gebruikers', type=str, help='Bestand gebruikers en hun groepen')
-        parser.add_argument('applicatie', type=str, help='Applicatie waar de gebruikers voor worden toegevoegd')
+        parser.add_argument('application', type=str, help='Applicatie waar de gebruikers voor worden toegevoegd')
 
     def handle(self, *args, **options):
         try:
-            applicatie = Application.objects.get(name=options['applicatie'])
+            application = Application.objects.get(name=options['application'])
         except Application.DoesNotExist:
-            print(f"Applicatie {options['applicatie']} niet gevonden")
+            print(f"Applicatie {options['application']} niet gevonden")
             return
-        applicatie.applicatie_syncpoint.active = False
-        applicatie.applicatie_syncpoint.save()
-        User.objects.all().filter(applicatie=applicatie.pk).delete()
-        LocGroup.objects.all().filter(applicatie=applicatie.pk).delete()
+        application.application_syncpoint.active = False
+        application.application_syncpoint.save()
+        User.objects.all().filter(application=application.pk).delete()
+        LocGroup.objects.all().filter(application=application.pk).delete()
         try:
             with open(f"{options['gebruikers']}", 'r', encoding='latin_1') as gebruikers:
                 users_reader = csv.DictReader(gebruikers, delimiter=';')
@@ -32,14 +32,14 @@ class Command(BaseCommand):
                         else:
                             personeelsnummer = None
                         try:
-                            user = User.getbylocusername(row['gebruiker'])
+                            user = User.getbylocusername(application.name, row['gebruiker'])
                         except User.DoesNotExist:
-                            user = User.objects.create(applicatie=applicatie)
+                            user = User.objects.create(application=application)
                             user.locusername = row['gebruiker']
                             user.is_staff = False
                             user.is_active = True
                             user.first_name = row['gebruiker']
-                            user.last_name = applicatie.name
+                            user.last_name = application.name
                             user.email = row['gebruiker'] + '@testen.nl'
                             if personeelsnummer:
                                 user.personeelsnummer = personeelsnummer
@@ -48,11 +48,11 @@ class Command(BaseCommand):
                         try:
                             group = LocGroup.objects.get(name=row['groep'])
                         except LocGroup.DoesNotExist:
-                            group = LocGroup.objects.create(name=row['groep'], applicatie=applicatie)
+                            group = LocGroup.objects.create(name=row['groep'], application=application)
                     if row['gebruiker']:
                         group.user_set.add(user)
                         group.save()
         except FileNotFoundError:
             print(f"Bestand {options['gebruikers']} niet gevonden")
-        client = SCIMProcess(applicatie.applicatie_syncpoint)
+        client = SCIMProcess(application.application_syncpoint)
         client.process()

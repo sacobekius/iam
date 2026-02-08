@@ -11,26 +11,36 @@
     {% for application in applications %}
         <tr>
             <td>
-                <b>{{ application.name }}</b>
+                <a href="{% url 'edit-application' application=application.name %}"><b>{{ application.name }}</b></a>
             </td>
             <td>
-                <form method="get" action="{% url 'user-list' applicatie=application.name %}">
+                <form method="get" action="{% url 'user-list' application=application.name %}">
                     <input class="gwknop" type="submit" value="Gebruikers">
                 </form>
             </td>
             <td>
-                <form method="get" action="{% url 'edit-groups' applicatie=application.name %}">
+                <form method="get" action="{% url 'edit-groups' application=application.name %}">
                     <input class="gwknop" type="submit" value="Groepen">
                 </form>
             </td>
             {% if is_staff %}
             <td>
-                <form method="get" action="{% url 'set-app-password' applicatie=application.name %}">
+                <form method="get" action="{% url 'set-app-password' application=application.name %}">
                     <input class="gwknop" type="submit" value="Wachtwoord">
                 </form>
             </td>
             {% endif %}
         </tr>
     {% endfor %}
+        <tr>
+            <td>
+                <form id="nieuwe_applicatie" method="get" action="{% url 'new-application' %}">
+                    <input type="text" name="application" placeholder="naam van applicatie">
+                </form>
+            </td>
+            <td>
+                <input form="nieuwe_applicatie" class="gwknop" type="submit" value="Maak nieuwe applicatie">
+            </td>
+        </tr>
     </table>
 {% endblock %}

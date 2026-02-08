@@ -3,7 +3,10 @@ from django.contrib.auth.models import AbstractUser, Group
 from oauth2_provider.models import Application
 
 class LocGroup(models.Model):
-    applicatie = models.ForeignKey("oauth2_provider.Application", related_name='applicatie_groups', on_delete=models.CASCADE, null=True,
+    application = models.ForeignKey("oauth2_provider.Application",
+                                   related_name='application_groups',
+                                   on_delete=models.CASCADE,
+                                   null=True,
                                    blank=True)
     name = models.CharField(max_length=255, blank=True, null=True)
 
@@ -15,7 +18,7 @@ class LocGroup(models.Model):
 
 
 class User(AbstractUser):
-    applicatie = models.ForeignKey("oauth2_provider.Application", related_name='applicatie_users',
+    application = models.ForeignKey("oauth2_provider.Application", related_name='application_users',
                                    on_delete=models.CASCADE, null=True, blank=True)
     personeelsnummer = models.CharField(max_length=6, null=True, blank=True)
     locgroup = models.ManyToManyField(LocGroup, related_name='user_set', verbose_name='Groepen', blank=True)
@@ -25,10 +28,10 @@ class User(AbstractUser):
 
     @property
     def locusername(self):
-        if self.applicatie:
-            apnmlen = len(self.applicatie.name)
-            if self.username[:apnmlen] != self.applicatie.name:
-                self.username = self.applicatie.name + "_" + self.username
+        if self.application:
+            apnmlen = len(self.application.name)
+            if self.username[:apnmlen] != self.application.name:
+                self.username = self.application.name + "_" + self.username
                 try:
                     User.objects.get(username=self.username).delete()
                 except User.DoesNotExist:
@@ -40,15 +43,15 @@ class User(AbstractUser):
 
     @locusername.setter
     def locusername(self, value):
-        if self.applicatie:
-            self.username = self.applicatie.name + '_' + value
+        if self.application:
+            self.username = self.application.name + '_' + value
 
     @classmethod
-    def getbylocusername(cls, applicatie_name, locusername):
-        return User.objects.get(username=applicatie_name + "_" + locusername)
+    def getbylocusername(cls, application_name, locusername):
+        return User.objects.get(username=application_name + "_" + locusername)
 
 class SyncPoint(models.Model):
-    applicatie = models.OneToOneField("oauth2_provider.Application", related_name='applicatie_syncpoint',
+    application = models.OneToOneField("oauth2_provider.Application", related_name='application_syncpoint',
                                       on_delete=models.CASCADE,  null=True, blank=True)
     active = models.BooleanField(default=False)
     dirty =models.BooleanField(default=False)
@@ -60,6 +63,6 @@ class SyncPoint(models.Model):
     last_result = models.TextField(blank=True, null=True)
 
 class ApplicatieSleutel(models.Model):
-    applicatie = models.OneToOneField("oauth2_provider.Application", related_name='applicatie_sleutel',
+    application = models.OneToOneField("oauth2_provider.Application", related_name='application_sleutel',
                                       on_delete=models.CASCADE, null=True, blank=True)
     password = models.CharField(max_length=128, blank=True, null=True)

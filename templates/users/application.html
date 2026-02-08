@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <form method="post" action="{% url 'edit-application' application=applicationform.instance.name %}">
+        {% csrf_token %}
+        {{ applicationform }}
+        <input type="submit" value="Bijwerken">
+    </form>
+    <form method="delete" action="{% url 'delete-application' application=applicationform.instance.name %}">
+        <input type="submit" value="Verwijder">
+    </form>
+{% endblock %}
