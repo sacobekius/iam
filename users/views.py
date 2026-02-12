@@ -57,9 +57,14 @@ class LoginView(View):
         nexturl = args[0].GET.get('next', '/')
         try:
             client_id = parse.parse_qs(parse.urlparse(nexturl).query)['client_id'][0]
-            application_id = Application.objects.get(client_id=client_id).id
-            application_naam = Application.objects.get(client_id=client_id).name
-            message = f'Kies een van de gebruikers om in te loggen bij {application_naam}.'
+            application = Application.objects.get(client_id=client_id)
+            application_id = application.id
+            application_naam = application.name
+            if application.application_syncpoint.active:
+                synchronisatie_status = f'Synchronisatie status: {application.application_syncpoint.synchronisatie_status()}'
+            else:
+                synchronisatie_status = 'Synchronisatie is uitgeschakeld.'
+            message = f'Kies een van de gebruikers om in te loggen bij {application_naam}. {synchronisatie_status}'
         except (KeyError, Application.DoesNotExist):
             application_id = None
             message = 'Configuratie inconsistent'

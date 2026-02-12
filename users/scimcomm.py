@@ -323,6 +323,7 @@ class SCIMProcess:
     def process(self):
         if self.endpoint.sync_point.busy:
             return True
+        self.endpoint.sync_point.last_request = None
         self.endpoint.sync_point.busy = True
         self.endpoint.sync_point.save()
         # Kans om LocGroup en Group te synchroniseren

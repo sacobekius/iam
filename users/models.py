@@ -63,6 +63,12 @@ class SyncPoint(models.Model):
     last_response = models.JSONField(blank=True, null=True)
     last_result = models.TextField(blank=True, null=True)
 
+    def synchronisatie_status(self):
+        if self.last_request:
+            return f'Synchronisatie stagneert: {self.last_result}'
+        else:
+            return 'Synchronisatie succesvol'
+
 class ApplicatieSleutel(models.Model):
     application = models.OneToOneField("oauth2_provider.Application", related_name='application_sleutel',
                                       on_delete=models.CASCADE, null=True, blank=True)
