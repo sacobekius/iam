@@ -66,7 +66,9 @@ class SyncPoint(models.Model):
     onverwachte_fout = models.TextField(max_length=255, blank=True, null=True)
 
     def synchronisatie_status(self):
-        if self.last_request:
+        if self.onverwachte_fout:
+            return f'Synchronisatie loopt fout: {self.onverwachte_fout}'
+        elif self.last_request:
             return f'Synchronisatie stagneert: {self.last_result}'
         else:
             return 'Synchronisatie succesvol'
