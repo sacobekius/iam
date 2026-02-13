@@ -368,43 +368,46 @@ class SCIMProcess:
                 self.users = SCIMUsers(self, self.endpoint)
                 self.groups = SCIMGroups(self, self.endpoint)
 
-                users_found = ()
-                scim_user_keys = list(self.users.keys())
-                for scim_user in scim_user_keys:
-                    try:
-                        user = User.objects.get(id=self.users[scim_user]['externalId'])
-                        if user.application and user.application.name != self.endpoint.sync_point.application.name:
+                while self.endpoint.sync_point.hit_while_busy:
+                    self.endpoint.sync_point.hit_while_busy = False
+                    self.endpoint.sync_point.save()
+                    users_found = ()
+                    scim_user_keys = list(self.users.keys())
+                    for scim_user in scim_user_keys:
+                        try:
+                            user = User.objects.get(id=self.users[scim_user]['externalId'])
+                            if user.application and user.application.name != self.endpoint.sync_point.application.name:
+                                self.users.delSCIM(scim_user)
+                            else:
+                                self.users.checkSCIM(user)
+                            users_found += (user.id,)
+                        except (User.DoesNotExist, ValueError, KeyError):
                             self.users.delSCIM(scim_user)
-                        else:
-                            self.users.checkSCIM(user)
-                        users_found += (user.id,)
-                    except (User.DoesNotExist, ValueError, KeyError):
-                        self.users.delSCIM(scim_user)
-                for user in User.objects.filter(application__name__exact=self.endpoint.sync_point.application.name):
-                    if user.id not in users_found:
-                        self.users.newSCIM(user)
+                    for user in User.objects.filter(application__name__exact=self.endpoint.sync_point.application.name):
+                        if user.id not in users_found:
+                            self.users.newSCIM(user)
 
-                groups_found = ()
-                scim_group_keys = list(self.groups.keys())
-                for scim_group in scim_group_keys:
-                    try:
-                        group = LocGroup.objects.get(id=self.groups[scim_group]['externalId'])
-                        if group.application and group.application.name != self.endpoint.sync_point.application.name:
+                    groups_found = ()
+                    scim_group_keys = list(self.groups.keys())
+                    for scim_group in scim_group_keys:
+                        try:
+                            group = LocGroup.objects.get(id=self.groups[scim_group]['externalId'])
+                            if group.application and group.application.name != self.endpoint.sync_point.application.name:
+                                self.groups.delSCIM(scim_group)
+                            else:
+                                self.groups.checkSCIM(group)
+                            groups_found += (group.id,)
+                        except (LocGroup.DoesNotExist, ValueError, KeyError):
                             self.groups.delSCIM(scim_group)
-                        else:
-                            self.groups.checkSCIM(group)
-                        groups_found += (group.id,)
-                    except (LocGroup.DoesNotExist, ValueError, KeyError):
-                        self.groups.delSCIM(scim_group)
-                for group in LocGroup.objects.all():
-                    if group.id not in groups_found:
-                        self.groups.newSCIM(group)
+                    for group in LocGroup.objects.all():
+                        if group.id not in groups_found:
+                            self.groups.newSCIM(group)
 
             except EndOfProcess:
                 result = False
             except Exception as e:
                 result = False
-                print(f'onverwachte fout: {e}')
+                self.endpoint.sync_point.onverwachte_fout = str(e)
         self.endpoint.sync_point.busy = False
         self.endpoint.sync_point.save()
         return result
