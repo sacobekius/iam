@@ -63,7 +63,7 @@ class SyncPoint(models.Model):
     last_request_body = models.TextField(blank=True, null=True)
     last_response = models.JSONField(blank=True, null=True)
     last_result = models.TextField(blank=True, null=True)
-    onverwachte_fout = models.CharField(max_length=255, blank=True, null=True)
+    onverwachte_fout = models.TextField(max_length=255, blank=True, null=True)
 
     def synchronisatie_status(self):
         if self.last_request:
