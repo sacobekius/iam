@@ -56,12 +56,14 @@ class SyncPoint(models.Model):
     active = models.BooleanField(default=False)
     dirty = models.BooleanField(default=False)
     busy = models.BooleanField(default=False)
+    hit_while_busy = models.BooleanField(default=False)
     url = models.URLField(max_length=255, blank=True, null=True)
     auth_token = models.CharField(max_length=255, blank=True, null=True)
     last_request = models.TextField(blank=True, null=True)
     last_request_body = models.TextField(blank=True, null=True)
     last_response = models.JSONField(blank=True, null=True)
     last_result = models.TextField(blank=True, null=True)
+    onverwachte_fout = models.CharField(max_length=255, blank=True, null=True)
 
     def synchronisatie_status(self):
         if self.last_request:

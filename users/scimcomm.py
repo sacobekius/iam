@@ -322,8 +322,12 @@ class SCIMProcess:
 
     def process(self):
         if self.endpoint.sync_point.busy:
+            if not self.endpoint.sync_point.hit_while_busy:
+                self.endpoint.sync_point.hit_while_busy = True
+                self.endpoint.sync_point.save()
             return True
         self.endpoint.sync_point.last_request = None
+        self.endpoint.sync_point.onverwachte_fout = None
         self.endpoint.sync_point.busy = True
         self.endpoint.sync_point.save()
         # Kans om LocGroup en Group te synchroniseren
@@ -398,6 +402,9 @@ class SCIMProcess:
 
             except EndOfProcess:
                 result = False
+            except Exception as e:
+                result = False
+                print(f'onverwachte fout: {e}')
         self.endpoint.sync_point.busy = False
         self.endpoint.sync_point.save()
         return result
