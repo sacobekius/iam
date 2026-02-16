@@ -326,6 +326,7 @@ class SCIMProcess:
             return True
         self.endpoint.sync_point.last_request = None
         self.endpoint.sync_point.last_result = None
+        self.endpoint.sync_point.last_response = ''
         self.endpoint.sync_point.onverwachte_fout = None
         self.endpoint.sync_point.busy = True
         self.endpoint.sync_point.save()
