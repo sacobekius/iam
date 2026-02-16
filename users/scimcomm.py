@@ -13,10 +13,10 @@ def scimtime(time):
 
 
 class EndOfProcess(Exception):
-    def __init__(self, response: requests.Response, sync_point):
+    def __init__(self, response: requests.Response, sync_point, request = '', request_body = None):
         self.response = response
-        sync_point.last_request = response.request.url
-        sync_point.last_request_body = response.request.body
+        sync_point.last_request = request
+        sync_point.last_request_body = request_body if request_body else ''
         sync_point.last_response = response.text
         sync_point.last_result = response.reason
         sync_point.save()
@@ -41,7 +41,7 @@ class SCIMComm:
 
         return url
 
-    def _process_response(self, response: requests.Response, expected: list = []) -> dict:
+    def _process_response(self, response: requests.Response, expected: list = None, request = '', request_body = None) -> dict:
         responses = {
             200: None,
             201: None,
@@ -49,7 +49,7 @@ class SCIMComm:
         }
 
         if response.status_code not in expected and response.status_code not in responses.keys():
-            raise EndOfProcess(response, self.sync_point)
+            raise EndOfProcess(response, self.sync_point, request, request_body)
         try:
             data = response.json()
         except ValueError:
@@ -59,23 +59,23 @@ class SCIMComm:
 
     def get(self, resource_path: str):
         response = self.session.get(url=self._get_url(resource_path), )
-        return self._process_response(response)
+        return self._process_response(response, request=self._get_url(resource_path))
 
     def post(self, resource_path: str, data: dict):
         response = self.session.post(url=self._get_url(resource_path), json=data)
-        return self._process_response(response, [201])
+        return self._process_response(response, [201], request=self._get_url(resource_path), request_body=data)
 
     def put(self, resource_path: str, data: dict):
         response = self.session.put(url=self._get_url(resource_path), json=data)
-        return self._process_response(response, [201])
+        return self._process_response(response, [201], request=self._get_url(resource_path), request_body=data)
 
     def patch(self, resource_path: str, data: dict):
         response = self.session.patch(url=self._get_url(resource_path), json=data)
-        return self._process_response(response, [201])
+        return self._process_response(response, [201], request=self._get_url(resource_path), request_body=data)
 
     def delete(self, resource_path: str):
         response = self.session.delete(url=self._get_url(resource_path))
-        return self._process_response(response, [204])
+        return self._process_response(response, [204], request=self._get_url(resource_path))
 
 
 class SCIMObjects:
@@ -327,6 +327,7 @@ class SCIMProcess:
                 self.endpoint.sync_point.save()
             return True
         self.endpoint.sync_point.last_request = None
+        self.endpoint.sync_point.last_result = None
         self.endpoint.sync_point.onverwachte_fout = None
         self.endpoint.sync_point.busy = True
         self.endpoint.sync_point.save()
