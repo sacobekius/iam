@@ -42,13 +42,11 @@ class SCIMComm:
         return url
 
     def _process_response(self, response: requests.Response, expected: list = None, request = '', request_body = None) -> dict:
-        responses = {
-            200: None,
-            201: None,
-            204: None,
-        }
+        responses = [ 200, 201, 204, ]
 
-        if response.status_code not in expected and response.status_code not in responses.keys():
+        if expected:
+            responses += expected
+        if response.status_code not in responses:
             raise EndOfProcess(response, self.sync_point, request, request_body)
         try:
             data = response.json()
