@@ -60,11 +60,7 @@ class LoginView(View):
             application = Application.objects.get(client_id=client_id)
             application_id = application.id
             application_naam = application.name
-            if application.application_syncpoint.active:
-                synchronisatie_status = f'Synchronisatie status: {application.application_syncpoint.synchronisatie_status()}'
-            else:
-                synchronisatie_status = 'Synchronisatie is uitgeschakeld.'
-            message = f'Kies een van de gebruikers om in te loggen bij {application_naam}. {synchronisatie_status}'
+            message = f'Kies een van de gebruikers om in te loggen bij {application_naam}. ({application.application_syncpoint.synchronisatie_status})'
         except (KeyError, Application.DoesNotExist):
             application_id = None
             message = 'Configuratie inconsistent'
@@ -247,6 +243,8 @@ def edit_application(request, *args, **kwargs):
             syncpoint.active = applicationform.cleaned_data['spactive']
             syncpoint.auth_token = applicationform.cleaned_data['spauth_token']
             syncpoint.save()
+            to_sync = SCIMProcess(syncpoint)
+            to_sync.process()
             return HttpResponseRedirect(reverse('edit-application', args=(application.name,)))
     else:
         return HttpResponseNotAllowed(['GET', 'POST'])

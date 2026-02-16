@@ -1,6 +1,14 @@
 {% extends "base.html" %}
 
 {% block content %}
+    <h2>
+        {{ applicationform.instance.name }}
+    </h2>
+    
+    <p>
+        Status: {{ applicationform.instance.application_syncpoint.synchronisatie_status }}
+    </p>
+
     <form method="post" action="{% url 'edit-application' application=applicationform.instance.name %}">
         {% csrf_token %}
         {{ applicationform }}

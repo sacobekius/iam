@@ -65,13 +65,18 @@ class SyncPoint(models.Model):
     last_result = models.TextField(blank=True, null=True)
     onverwachte_fout = models.TextField(max_length=255, blank=True, null=True)
 
+    @property
     def synchronisatie_status(self):
         if self.onverwachte_fout:
             return f'{self.onverwachte_fout}'
         elif self.last_request:
             return f'{self.last_request} --> {self.last_result} {self.last_response}'
         else:
-            return 'Synchronisatie succesvol'
+            if self.active:
+                return 'Synchronisatie is succesvol'
+            else:
+                return 'Synchronisatie is uitgeschakeld'
+
 
 class ApplicatieSleutel(models.Model):
     application = models.OneToOneField("oauth2_provider.Application", related_name='application_sleutel',
