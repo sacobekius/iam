@@ -67,9 +67,9 @@ class SyncPoint(models.Model):
 
     def synchronisatie_status(self):
         if self.onverwachte_fout:
-            return f'Synchronisatie loopt fout: {self.onverwachte_fout}'
+            return f'{self.onverwachte_fout}'
         elif self.last_request:
-            return f'Synchronisatie stagneert: {self.last_request} --> {self.last_result} {self.last_response}'
+            return f'{self.last_request} --> {self.last_result} {self.last_response}'
         else:
             return 'Synchronisatie succesvol'
 
