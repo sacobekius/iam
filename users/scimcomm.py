@@ -362,6 +362,7 @@ class SCIMProcess:
 
         # SCIM Synchronisatie
         result = False
+        self.endpoint.sync_point.hit_while_busy = True
         if self.endpoint.sync_point.active:
             result = True
             try:
