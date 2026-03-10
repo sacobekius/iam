@@ -208,6 +208,8 @@ def new_application(request, *args, **kwargs):
 def delete_application(request, *args, **kwargs):
     try:
         application = Application.objects.get(name=kwargs['application'])
+        if application.application_syncpoint:
+            application.application_syncpoint.delete()
         application.delete()
         return HttpResponseRedirect(reverse('iam-root'))
     except (Application.DoesNotExist, KeyError):
