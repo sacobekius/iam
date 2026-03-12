@@ -332,8 +332,8 @@ class SCIMProcess:
         self.endpoint.sync_point.onverwachte_fout = None
         self.endpoint.sync_point.busy = True
         self.endpoint.sync_point.save()
-        # Kans om LocGroup en Group te synchroniseren
-        if 'sync_groups' in IAM.settings:
+        # Kans om LocGroup en Group te synchroniseren, uitgezet vanwege kosten, optie maken?
+        if None:
             groupsrequired = ()
             for loc_group in LocGroup.objects.all():
                 if loc_group.application:
