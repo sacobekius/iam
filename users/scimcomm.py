@@ -7,6 +7,8 @@ from django.db.models.signals import pre_save, pre_delete, m2m_changed, post_sav
 from django.dispatch import receiver
 from django.contrib.auth.models import Group
 
+import IAM.settings
+
 
 def scimtime(time):
     return time.strftime('%Y-%m-%dT%H:%M:%S')
@@ -331,34 +333,35 @@ class SCIMProcess:
         self.endpoint.sync_point.busy = True
         self.endpoint.sync_point.save()
         # Kans om LocGroup en Group te synchroniseren
-        groupsrequired = ()
-        for loc_group in LocGroup.objects.all():
-            if loc_group.application:
-                groupname = loc_group.application.name + '_' + loc_group.name
-                groupsrequired += (groupname,)
-                try:
-                    group = Group.objects.get(name=groupname)
-                    for loc_group_member in loc_group.user_set.all():
-                        try:
-                            group.user_set.get(username=loc_group_member.username)
-                        except User.DoesNotExist:
+        if 'sync_groups' in IAM.settings:
+            groupsrequired = ()
+            for loc_group in LocGroup.objects.all():
+                if loc_group.application:
+                    groupname = loc_group.application.name + '_' + loc_group.name
+                    groupsrequired += (groupname,)
+                    try:
+                        group = Group.objects.get(name=groupname)
+                        for loc_group_member in loc_group.user_set.all():
+                            try:
+                                group.user_set.get(username=loc_group_member.username)
+                            except User.DoesNotExist:
+                                group.user_set.add(loc_group_member)
+                        for group_member in group.user_set.all():
+                            try:
+                                loc_group.user_set.get(username=group_member.username)
+                            except User.DoesNotExist:
+                                group.user_set.remove(group_member)
+                        group.save()
+                    except Group.DoesNotExist:
+                        group = Group.objects.create(name=groupname)
+                        for loc_group_member in loc_group.user_set.all():
                             group.user_set.add(loc_group_member)
-                    for group_member in group.user_set.all():
-                        try:
-                            loc_group.user_set.get(username=group_member.username)
-                        except User.DoesNotExist:
-                            group.user_set.remove(group_member)
-                    group.save()
-                except Group.DoesNotExist:
-                    group = Group.objects.create(name=groupname)
-                    for loc_group_member in loc_group.user_set.all():
-                        group.user_set.add(loc_group_member)
-                    group.save()
-            else:
-                loc_group.delete()
-        for group in Group.objects.all():
-            if group.name not in groupsrequired:
-                group.delete()
+                        group.save()
+                else:
+                    loc_group.delete()
+            for group in Group.objects.all():
+                if group.name not in groupsrequired:
+                    group.delete()
 
         # SCIM Synchronisatie
         result = False
