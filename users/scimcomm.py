@@ -1,13 +1,11 @@
 import requests, datetime, time
 from urllib.parse import urljoin
 
-from oauth2_provider.management.commands.createapplication import Application
-from users.models import User, LocGroup
-from django.db.models.signals import pre_save, pre_delete, m2m_changed, post_save, post_delete
-from django.dispatch import receiver
-from django.contrib.auth.models import Group
+import django.utils.timezone as timezone
 
-import IAM.settings
+from oauth2_provider.management.commands.createapplication import Application
+from users.models import User, LocGroup, SyncPoint
+from django.contrib.auth.models import Group
 
 
 def scimtime(time):
@@ -107,26 +105,6 @@ class SCIMObjects:
         del self.objects[key]
 
 
-@receiver(pre_save, sender=LocGroup)
-@receiver(pre_delete, sender=LocGroup)
-def group_handler(sender, instance, **kwargs):
-    relevant_syncpoints = []
-    try:
-        for user in instance.user_set.all():
-            try:
-                if user.application:
-                    if user.application.application_syncpoint:
-                        if user.application.application_syncpoint not in relevant_syncpoints:
-                            relevant_syncpoints.append(user.application.application_syncpoint)
-            except Application.application_syncpoint.RelatedObjectDoesNotExist:
-                pass
-    except ValueError:
-        pass
-    for syncpoint in relevant_syncpoints:
-        to_sync = SCIMProcess(syncpoint)
-        to_sync.process()
-
-
 class SCIMGroups(SCIMObjects):
 
     def __init__(self, process, endpoint):
@@ -205,46 +183,6 @@ class SCIMGroups(SCIMObjects):
             self.objects[key] = self.endpoint.get(f'Groups/{key}')
 
 
-@receiver(m2m_changed, sender=User.locgroup.through)
-def set_dirty_after_group_change(sender, instance, **kwargs):
-    if 'action' in kwargs.keys() and kwargs['action'] in ['post_add', 'post_remove']:
-        if type(instance) == User and instance.application and hasattr(instance.application, 'application_syncpoint'):
-            to_sync = SCIMProcess(instance.application.application_syncpoint)
-            to_sync.process()
-            instance.application.application_syncpoint.dirty = False
-            instance.application.application_syncpoint.save()
-
-
-@receiver(pre_save, sender=User)
-@receiver(pre_delete, sender=User)
-def user_pre_handler(sender, instance, **kwargs):
-    if 'action' in kwargs.keys() and kwargs['action'] in ['pre_add', 'pre_remove']:
-        return
-    if type(instance) == User and instance.application and hasattr(instance.application, 'application_syncpoint'):
-        try:
-            curr_user = User.objects.get(id=instance.id)
-            instance.application.application_syncpoint.dirty |= curr_user.username != instance.locusername or \
-                                                              curr_user.first_name != instance.first_name or \
-                                                              curr_user.last_name != instance.last_name or \
-                                                              curr_user.email != instance.email or \
-                                                              curr_user.is_active != instance.is_active or \
-                                                              curr_user.personeelsnummer != instance.personeelsnummer
-        except User.DoesNotExist:
-            instance.application.application_syncpoint.dirty |= True
-        instance.application.application_syncpoint.save()
-
-
-@receiver(post_save, sender=User)
-@receiver(post_delete, sender=User)
-def user_post_handler(sender, instance, **kwargs):
-    if 'action' in kwargs.keys() and kwargs['action'] in ['pre_add', 'pre_remove']:
-        return
-    if type(instance) == User and instance.application and hasattr(instance.application, 'application_syncpoint'):
-        if instance.application.application_syncpoint.dirty:
-            to_sync = SCIMProcess(instance.application.application_syncpoint)
-            to_sync.process()
-            instance.application.application_syncpoint.dirty = False
-            instance.application.application_syncpoint.save()
 
 
 class SCIMUsers(SCIMObjects):
@@ -312,69 +250,61 @@ class SCIMUsers(SCIMObjects):
         new_object = self.endpoint.post('Users', scim_representation)
         self.objects[new_object['id']] = new_object
 
+def sync_group_locgroup():
+    # Kans om LocGroup en Group te synchroniseren,
+    groupsrequired = ()
+    for loc_group in LocGroup.objects.all():
+        if loc_group.application:
+            groupname = loc_group.application.name + '_' + loc_group.name
+            groupsrequired += (groupname,)
+            try:
+                group = Group.objects.get(name=groupname)
+                for loc_group_member in loc_group.user_set.all():
+                    try:
+                        group.user_set.get(username=loc_group_member.username)
+                    except User.DoesNotExist:
+                        group.user_set.add(loc_group_member)
+                for group_member in group.user_set.all():
+                    try:
+                        loc_group.user_set.get(username=group_member.username)
+                    except User.DoesNotExist:
+                        group.user_set.remove(group_member)
+                group.save()
+            except Group.DoesNotExist:
+                group = Group.objects.create(name=groupname)
+                for loc_group_member in loc_group.user_set.all():
+                    group.user_set.add(loc_group_member)
+                group.save()
+        else:
+            loc_group.delete()
+    for group in Group.objects.all():
+        if group.name not in groupsrequired:
+            group.delete()
 
 class SCIMProcess:
 
     def __init__(self, sync_point):
-        self.groups = None
-        self.users = None
+        self.sync_point_id = sync_point.id
         self.endpoint = SCIMComm(sync_point)
+        self.groups = SCIMGroups(self, self.endpoint)
+        self.users = SCIMUsers(self, self.endpoint)
 
     def process(self):
-        if self.endpoint.sync_point.busy:
-            if not self.endpoint.sync_point.hit_while_busy:
-                self.endpoint.sync_point.hit_while_busy = True
-                self.endpoint.sync_point.save()
-            return True
-        self.endpoint.sync_point.last_request = None
-        self.endpoint.sync_point.last_result = None
-        self.endpoint.sync_point.last_response = ''
-        self.endpoint.sync_point.onverwachte_fout = None
-        self.endpoint.sync_point.busy = True
-        self.endpoint.sync_point.save()
-        # Kans om LocGroup en Group te synchroniseren, uitgezet vanwege kosten, optie maken?
-        if None:
-            groupsrequired = ()
-            for loc_group in LocGroup.objects.all():
-                if loc_group.application:
-                    groupname = loc_group.application.name + '_' + loc_group.name
-                    groupsrequired += (groupname,)
-                    try:
-                        group = Group.objects.get(name=groupname)
-                        for loc_group_member in loc_group.user_set.all():
-                            try:
-                                group.user_set.get(username=loc_group_member.username)
-                            except User.DoesNotExist:
-                                group.user_set.add(loc_group_member)
-                        for group_member in group.user_set.all():
-                            try:
-                                loc_group.user_set.get(username=group_member.username)
-                            except User.DoesNotExist:
-                                group.user_set.remove(group_member)
-                        group.save()
-                    except Group.DoesNotExist:
-                        group = Group.objects.create(name=groupname)
-                        for loc_group_member in loc_group.user_set.all():
-                            group.user_set.add(loc_group_member)
-                        group.save()
-                else:
-                    loc_group.delete()
-            for group in Group.objects.all():
-                if group.name not in groupsrequired:
-                    group.delete()
-
+        sync_point = SyncPoint.objects.get(pk=self.sync_point_id)
+        sync_point.last_request = None
+        sync_point.last_result = None
+        sync_point.last_response = ''
+        sync_point.onverwachte_fout = None
+        sync_point.save()
         # SCIM Synchronisatie
         result = False
-        self.endpoint.sync_point.hit_while_busy = True
-        if self.endpoint.sync_point.active:
+        if sync_point.active:
             result = True
             try:
-                self.users = SCIMUsers(self, self.endpoint)
-                self.groups = SCIMGroups(self, self.endpoint)
+                while sync_point.last_updated > sync_point.last_sync:
+                    sync_point.last_sync = timezone.now()
+                    sync_point.save()
 
-                while self.endpoint.sync_point.hit_while_busy:
-                    self.endpoint.sync_point.hit_while_busy = False
-                    self.endpoint.sync_point.save()
                     users_found = ()
                     scim_user_keys = list(self.users.keys())
                     for scim_user in scim_user_keys:
@@ -406,14 +336,13 @@ class SCIMProcess:
                     for group in LocGroup.objects.all():
                         if group.id not in groups_found:
                             self.groups.newSCIM(group)
+                    sync_point = SyncPoint.objects.get(pk=self.sync_point_id)
 
             except EndOfProcess:
                 result = False
             except Exception as e:
                 result = False
                 self.endpoint.sync_point.onverwachte_fout = str(e)
-        self.endpoint.sync_point.busy = False
-        self.endpoint.sync_point.save()
         return result
 
     def clear(self):
