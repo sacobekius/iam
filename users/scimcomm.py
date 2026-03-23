@@ -286,12 +286,8 @@ class SCIMProcess:
     def __init__(self, sync_point):
         self.sync_point_id = sync_point.id
         self.endpoint = SCIMComm(sync_point)
-        try:
-            self.groups = SCIMGroups(self, self.endpoint)
-            self.users = SCIMUsers(self, self.endpoint)
-        except Exception as e:
-            self.endpoint.sync_point.onverwachte_fout = str(e)
-            self.endpoint.sync_point.save()
+        self.users = None
+        self.groups = None
 
     def process(self):
         sync_point = SyncPoint.objects.get(pk=self.sync_point_id)
@@ -305,6 +301,8 @@ class SCIMProcess:
         if sync_point.active:
             result = True
             try:
+                if not self.groups: self.groups = SCIMGroups(self, self.endpoint)
+                if not self.users: self.users = SCIMUsers(self, self.endpoint)
                 while sync_point.last_updated > sync_point.last_sync:
                     sync_point.last_sync = timezone.now()
                     sync_point.save()
@@ -347,6 +345,7 @@ class SCIMProcess:
             except Exception as e:
                 result = False
                 self.endpoint.sync_point.onverwachte_fout = str(e)
+                self.endpoint.sync_point.save()
         return result
 
     def clear(self):

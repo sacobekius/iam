@@ -244,6 +244,7 @@ def edit_application(request, *args, **kwargs):
             syncpoint.url = applicationform.cleaned_data['spurl']
             syncpoint.active = applicationform.cleaned_data['spactive']
             syncpoint.auth_token = applicationform.cleaned_data['spauth_token']
+            syncpoint.mark_dirty()
             syncpoint.save()
             to_sync = SCIMProcess(syncpoint)
             to_sync.process()
