@@ -13,8 +13,9 @@ def scimtime(time):
 
 
 class EndOfProcess(Exception):
-    def __init__(self, response: requests.Response, sync_point, request = '', request_body = None):
+    def __init__(self, response: requests.Response, sync_point_id, request = '', request_body = None):
         self.response = response
+        sync_point = SyncPoint.objects.get(pk=sync_point_id)
         sync_point.last_request = request
         sync_point.last_request_body = request_body if request_body else ''
         sync_point.last_response = response.text
@@ -25,7 +26,7 @@ class EndOfProcess(Exception):
 class SCIMComm:
 
     def __init__(self, sync_point):
-        self.sync_point = sync_point
+        self.sync_point_id = sync_point.id
         self.session = requests.Session()
         self.state = {}
         self.session.headers.update({
@@ -47,7 +48,7 @@ class SCIMComm:
         if expected:
             responses += expected
         if response.status_code not in responses:
-            raise EndOfProcess(response, self.sync_point, request, request_body)
+            raise EndOfProcess(response, self.sync_point.id, request, request_body)
         try:
             data = response.json()
         except ValueError:
@@ -344,8 +345,9 @@ class SCIMProcess:
                 result = False
             except Exception as e:
                 result = False
-                self.endpoint.sync_point.onverwachte_fout = str(e)
-                self.endpoint.sync_point.save()
+                sync_point = SyncPoint.objects.get(pk=self.sync_point_id)
+                sync_point.onverwachte_fout = str(e)
+                sync_point.sync_point.save()
         return result
 
     def clear(self):
