@@ -27,10 +27,11 @@ class SCIMComm:
 
     def __init__(self, sync_point):
         self.sync_point_id = sync_point.id
+        sync_point = SyncPoint.objects.get(pk=sync_point.id)
         self.session = requests.Session()
         self.state = {}
         self.session.headers.update({
-            'Authorization': 'Bearer %s' % self.sync_point.auth_token,
+            'Authorization': 'Bearer %s' % sync_point.auth_token,
             'User-Agent': 'Autorisatie STUB',
             'Accept': 'application/json',
         })
