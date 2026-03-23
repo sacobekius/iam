@@ -286,8 +286,11 @@ class SCIMProcess:
     def __init__(self, sync_point):
         self.sync_point_id = sync_point.id
         self.endpoint = SCIMComm(sync_point)
-        self.groups = SCIMGroups(self, self.endpoint)
-        self.users = SCIMUsers(self, self.endpoint)
+        try:
+            self.groups = SCIMGroups(self, self.endpoint)
+            self.users = SCIMUsers(self, self.endpoint)
+        except Exception as e:
+            self.endpoint.sync_point.onverwachte_fout = str(e)
 
     def process(self):
         sync_point = SyncPoint.objects.get(pk=self.sync_point_id)
