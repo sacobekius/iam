@@ -28,6 +28,7 @@ class SCIMComm:
     def __init__(self, sync_point):
         self.sync_point_id = sync_point.id
         sync_point = SyncPoint.objects.get(pk=sync_point.id)
+        self.sync_point = sync_point
         self.session = requests.Session()
         self.state = {}
         self.session.headers.update({
