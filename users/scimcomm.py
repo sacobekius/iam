@@ -291,6 +291,7 @@ class SCIMProcess:
             self.users = SCIMUsers(self, self.endpoint)
         except Exception as e:
             self.endpoint.sync_point.onverwachte_fout = str(e)
+            self.endpoint.sync_point.save()
 
     def process(self):
         sync_point = SyncPoint.objects.get(pk=self.sync_point_id)
