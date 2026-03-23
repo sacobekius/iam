@@ -348,7 +348,7 @@ class SCIMProcess:
                 result = False
                 sync_point = SyncPoint.objects.get(pk=self.sync_point_id)
                 sync_point.onverwachte_fout = str(e)
-                sync_point.sync_point.save()
+                sync_point.save()
         return result
 
     def clear(self):
