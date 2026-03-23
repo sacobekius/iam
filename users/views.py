@@ -208,6 +208,8 @@ def new_application(request, *args, **kwargs):
 def delete_application(request, *args, **kwargs):
     try:
         application = Application.objects.get(name=kwargs['application'])
+        LocGroup.objects.filter(application=application).delete()
+        User.objects.filter(application=application).delete()
         if application.application_syncpoint:
             application.application_syncpoint.delete()
         application.delete()
