@@ -338,7 +338,7 @@ class SCIMProcess:
                             groups_found += (group.id,)
                         except (LocGroup.DoesNotExist, ValueError, KeyError):
                             self.groups.delSCIM(scim_group)
-                    for group in LocGroup.objects.all():
+                    for group in LocGroup.objects.filter(application__name__exact=self.endpoint.sync_point.application.name):
                         if group.id not in groups_found:
                             self.groups.newSCIM(group)
                     sync_point = SyncPoint.objects.get(pk=self.sync_point_id)
