@@ -299,6 +299,8 @@ class SCIMProcess:
         sync_point.last_response = ''
         sync_point.onverwachte_fout = None
         sync_point.save()
+        # Sync LocGroup en Group
+        sync_group_locgroup()
         # SCIM Synchronisatie
         result = False
         if sync_point.active:
