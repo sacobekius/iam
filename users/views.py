@@ -9,8 +9,8 @@ from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.auth.mixins import PermissionRequiredMixin, AccessMixin
 from django.db import transaction
 from django.contrib.auth.hashers import check_password, is_password_usable, make_password
-from django.http import HttpResponseNotFound, HttpResponseRedirect, JsonResponse, HttpResponseNotAllowed, \
-    HttpResponseServerError
+from django.http import HttpResponse, HttpResponseNotFound, HttpResponseRedirect, JsonResponse, \
+    HttpResponseNotAllowed, HttpResponseServerError
 from django.contrib.auth import logout, login
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, reverse
