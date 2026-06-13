@@ -19,7 +19,7 @@ from django.urls import include, path
 from oauth2_provider import urls as oauth2_urls
 from oauth2_provider.views import ConnectDiscoveryInfoView, RPInitiatedLogoutView
 
-from users.views import (iam_root, LoginView, list_users, UserView, edit_groups, GroupView,
+from users.views import (iam_root, LoginView, list_users, UserView, edit_rollen, GroupView,
                          new_user, delete_user, AppPasswordView, edit_application, new_application,
                          delete_application, test_login, test_callback)
 
@@ -40,7 +40,7 @@ urlpatterns = [
     path('<str:application>/newuser/', new_user, name='new-user'),
     path('users/<int:userid>/', UserView.as_view(), name='user-detail'),
     path('users/<int:userid>/delete/', delete_user, name='user-delete'),
-    path('<str:application>/groups/', edit_groups, name='edit-groups'),
+    path('<str:application>/rollen/', edit_rollen, name='edit-rollen'),
     path('<str:application>/password/', AppPasswordView.as_view(), name='set-app-password'),
     path('groups/<int:groupid>/', GroupView.as_view(), name='group-detail'),
     path('application/new/', new_application, name='new-application'),

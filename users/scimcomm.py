@@ -4,7 +4,7 @@ from urllib.parse import urljoin
 import django.utils.timezone as timezone
 
 from oauth2_provider.management.commands.createapplication import Application
-from users.models import User, LocGroup, SyncPoint
+from users.models import User, Rol, SyncPoint
 from django.contrib.auth.models import Group
 
 
@@ -254,32 +254,32 @@ class SCIMUsers(SCIMObjects):
         self.objects[new_object['id']] = new_object
 
 def sync_group_locgroup():
-    # Kans om LocGroup en Group te synchroniseren,
+    # Kans om Rol en Group te synchroniseren,
     groupsrequired = ()
-    for loc_group in LocGroup.objects.all():
-        if loc_group.application:
-            groupname = loc_group.application.name + '_' + loc_group.name
+    for rol in Rol.objects.all():
+        if rol.application:
+            groupname = rol.application.name + '_' + rol.name
             groupsrequired += (groupname,)
             try:
                 group = Group.objects.get(name=groupname)
-                for loc_group_member in loc_group.user_set.all():
+                for rol_member in rol.user_set.all():
                     try:
-                        group.user_set.get(username=loc_group_member.username)
+                        group.user_set.get(username=rol_member.username)
                     except User.DoesNotExist:
-                        group.user_set.add(loc_group_member)
+                        group.user_set.add(rol_member)
                 for group_member in group.user_set.all():
                     try:
-                        loc_group.user_set.get(username=group_member.username)
+                        rol.user_set.get(username=group_member.username)
                     except User.DoesNotExist:
                         group.user_set.remove(group_member)
                 group.save()
             except Group.DoesNotExist:
                 group = Group.objects.create(name=groupname)
-                for loc_group_member in loc_group.user_set.all():
-                    group.user_set.add(loc_group_member)
+                for rol_member in rol.user_set.all():
+                    group.user_set.add(rol_member)
                 group.save()
         else:
-            loc_group.delete()
+            rol.delete()
     for group in Group.objects.all():
         if group.name not in groupsrequired:
             group.delete()
@@ -330,15 +330,15 @@ class SCIMProcess:
                     scim_group_keys = list(self.groups.keys())
                     for scim_group in scim_group_keys:
                         try:
-                            group = LocGroup.objects.get(id=self.groups[scim_group]['externalId'])
+                            group = Rol.objects.get(id=self.groups[scim_group]['externalId'])
                             if group.application and group.application.name != self.endpoint.sync_point.application.name:
                                 self.groups.delSCIM(scim_group)
                             else:
                                 self.groups.checkSCIM(group)
                             groups_found += (group.id,)
-                        except (LocGroup.DoesNotExist, ValueError, KeyError):
+                        except (Rol.DoesNotExist, ValueError, KeyError):
                             self.groups.delSCIM(scim_group)
-                    for group in LocGroup.objects.filter(application__name__exact=self.endpoint.sync_point.application.name):
+                    for group in Rol.objects.filter(application__name__exact=self.endpoint.sync_point.application.name):
                         if group.id not in groups_found:
                             self.groups.newSCIM(group)
                     sync_point = SyncPoint.objects.get(pk=self.sync_point_id)

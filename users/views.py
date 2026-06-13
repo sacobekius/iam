@@ -17,8 +17,8 @@ from django.shortcuts import render, reverse
 from django.views import View
 
 from oauth2_provider.models import Application
-from users.forms import UserForm, LocGroupsForm, ApplicationForm
-from users.models import User, LocGroup, ApplicatieSleutel, SyncPoint
+from users.forms import UserForm, RollenFormSet, ApplicationForm
+from users.models import User, Rol, ApplicatieSleutel, SyncPoint
 
 from users.scimcomm import *
 
@@ -55,7 +55,7 @@ class LoginView(View):
                     'is_staff': user.is_staff,
                     'usable_password': usable_password,
                     'form_id': f'"form_{user.id}"',
-                    'groups': ', '.join(map(lambda g: g.name, user.locgroup.all())),
+                    'groups': ', '.join(map(lambda g: g.name, user.rollen.all())),
                 }
             )
 
@@ -215,7 +215,7 @@ def new_application(request, *args, **kwargs):
 def delete_application(request, *args, **kwargs):
     try:
         application = Application.objects.get(name=kwargs['application'])
-        LocGroup.objects.filter(application=application).delete()
+        Rol.objects.filter(application=application).delete()
         User.objects.filter(application=application).delete()
         if application.application_syncpoint:
             application.application_syncpoint.delete()
@@ -266,21 +266,21 @@ def edit_application(request, *args, **kwargs):
     })
 
 @login_required(login_url='accounts/login')
-def edit_groups(request, *args, **kwargs):
+def edit_rollen(request, *args, **kwargs):
     try:
         application = Application.objects.get(name=kwargs['application'])
     except (Application.DoesNotExist, KeyError):
         return HttpResponseNotFound('Applicatie does not exist')
     if request.method == 'GET':
-        groupsform = LocGroupsForm(instance=application)
+        groupsform = RollenFormSet(instance=application)
     elif request.method == 'POST':
-        groupsform = LocGroupsForm(request.POST, instance=application)
+        groupsform = RollenFormSet(request.POST, instance=application)
         if groupsform.is_valid():
             groupsform.save()
-            return HttpResponseRedirect(reverse('edit-groups', args=(application.name,)))
+            return HttpResponseRedirect(reverse('edit-rollen', args=(application.name,)))
     else:
         return HttpResponseNotAllowed(['GET', 'POST'])
-    return render(request, 'users/edit_groups.html', {
+    return render(request, 'users/edit_rollen.html', {
         'application': application.name,
         'groupsform': groupsform
     })

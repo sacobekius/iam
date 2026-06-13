@@ -19,8 +19,8 @@
                 </form>
             </td>
             <td>
-                <form method="get" action="{% url 'edit-groups' application=application.name %}">
-                    <input class="gwknop" type="submit" value="Groepen">
+                <form method="get" action="{% url 'edit-rollen' application=application.name %}">
+                    <input class="gwknop" type="submit" value="Rollen">
                 </form>
             </td>
             {% if is_staff %}

@@ -7,7 +7,7 @@ from oauth2_provider.models import Application
 
 import django.utils.timezone as timezone
 
-class LocGroup(models.Model):
+class Rol(models.Model):
     application = models.ForeignKey("oauth2_provider.Application",
                                    related_name='application_groups',
                                    on_delete=models.CASCADE,
@@ -26,7 +26,7 @@ class User(AbstractUser):
     application = models.ForeignKey("oauth2_provider.Application", related_name='application_users',
                                    on_delete=models.CASCADE, null=True, blank=True)
     personeelsnummer = models.CharField(max_length=6, null=True, blank=True)
-    locgroup = models.ManyToManyField(LocGroup, related_name='user_set', verbose_name='Groepen', blank=True)
+    rollen = models.ManyToManyField(Rol, related_name='user_set', verbose_name='Rollen', blank=True)
 
     class Meta:
         ordering = ['username']
@@ -94,7 +94,7 @@ class ApplicatieSleutel(models.Model):
     password = models.CharField(max_length=128, blank=True, null=True)
 
 
-@receiver(m2m_changed, sender=User.locgroup.through)
+@receiver(m2m_changed, sender=User.rollen.through)
 def set_dirty_after_group_change(sender, instance, **kwargs):
     if 'action' in kwargs.keys() and kwargs['action'] in ['post_add', 'post_remove']:
         if type(instance) == User and instance.application and hasattr(instance.application, 'application_syncpoint'):
@@ -108,8 +108,8 @@ def user_post_handler(sender, instance, **kwargs):
     if type(instance) == User and instance.application and hasattr(instance.application, 'application_syncpoint'):
         instance.application.application_syncpoint.mark_dirty()
 
-@receiver(post_save, sender=LocGroup)
-@receiver(post_delete, sender=LocGroup)
+@receiver(post_save, sender=Rol)
+@receiver(post_delete, sender=Rol)
 def group_handler(sender, instance, **kwargs):
     relevant_syncpoints = []
     try:

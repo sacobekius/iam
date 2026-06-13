@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import User, SyncPoint, LocGroup, ApplicatieSleutel
+from .models import User, SyncPoint, Rol, ApplicatieSleutel
 
 
 class UserAdmin(admin.ModelAdmin):
@@ -8,11 +8,11 @@ class UserAdmin(admin.ModelAdmin):
 
 admin.site.register(User, UserAdmin)
 
-class LocGroupAdmin(admin.ModelAdmin):
+class RolAdmin(admin.ModelAdmin):
     list_display = ('name', 'application',)
     search_fields = ('name',)
 
-admin.site.register(LocGroup, LocGroupAdmin)
+admin.site.register(Rol, RolAdmin)
 
 class SyncPointAdmin(admin.ModelAdmin):
     list_display = ('application', 'url', 'auth_token',)

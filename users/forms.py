@@ -1,7 +1,7 @@
 from django import forms
 
 from oauth2_provider.models import Application
-from users.models import User, LocGroup
+from users.models import User, Rol
 
 
 class ApplicationForm(forms.ModelForm):
@@ -23,13 +23,13 @@ class ApplicationForm(forms.ModelForm):
                   'spauth_token')
 
 
-class LocGroupForm(forms.ModelForm):
+class RolForm(forms.ModelForm):
     class Meta:
-        model = LocGroup
+        model = Rol
         fields = ('name',)
 
 
-LocGroupsForm = forms.inlineformset_factory(Application, LocGroup, form=LocGroupForm, extra=3, can_delete=True)
+RollenFormSet = forms.inlineformset_factory(Application, Rol, form=RolForm, extra=3, can_delete=True)
 
 
 class UserForm(forms.ModelForm):
@@ -38,9 +38,9 @@ class UserForm(forms.ModelForm):
 
     class Meta:
         model = User
-        fields = ('locusername', 'personeelsnummer', 'email', 'locgroup',)
+        fields = ('locusername', 'personeelsnummer', 'email', 'rollen',)
         widgets = {
-            'locgroup': forms.CheckboxSelectMultiple({'class': 'user-group-checkbox'}),
+            'rollen': forms.CheckboxSelectMultiple({'class': 'user-group-checkbox'}),
         }
         help_texts = {
             'username': None,
@@ -51,11 +51,11 @@ class UserForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
 
         if self.instance.pk and self.instance.application:
-            self.fields['locgroup'].queryset = LocGroup.objects.filter(
+            self.fields['rollen'].queryset = Rol.objects.filter(
                 application=self.instance.application
             )
         else:
-            self.fields['locgroup'].queryset = LocGroup.objects.none()
+            self.fields['rollen'].queryset = Rol.objects.none()
 
     def save(self, commit=True):
         self.instance.locusername = self.cleaned_data['locusername']

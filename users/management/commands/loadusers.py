@@ -1,7 +1,7 @@
 import csv
 
 from django.core.management.base import BaseCommand
-from users.models import User, LocGroup
+from users.models import User, Rol
 from users.scimcomm import SCIMProcess
 from oauth2_provider.models import Application
 
@@ -21,7 +21,7 @@ class Command(BaseCommand):
         application.application_syncpoint.active = False
         application.application_syncpoint.save()
         User.objects.all().filter(application=application.pk).delete()
-        LocGroup.objects.all().filter(application=application.pk).delete()
+        Rol.objects.all().filter(application=application.pk).delete()
         try:
             with open(f"{options['gebruikers']}", 'r', encoding='latin_1') as gebruikers:
                 users_reader = csv.DictReader(gebruikers, delimiter=';')
@@ -46,9 +46,9 @@ class Command(BaseCommand):
                             user.save()
                     if row['groep']:
                         try:
-                            group = LocGroup.objects.get(name=row['groep'])
-                        except LocGroup.DoesNotExist:
-                            group = LocGroup.objects.create(name=row['groep'], application=application)
+                            group = Rol.objects.get(name=row['groep'])
+                        except Rol.DoesNotExist:
+                            group = Rol.objects.create(name=row['groep'], application=application)
                     if row['gebruiker']:
                         group.user_set.add(user)
                         group.save()

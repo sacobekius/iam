@@ -2,14 +2,14 @@
 
 {% block content %}
     <h2>
-        Groepen voor {{ application }}
+        Rollen voor {{ application }}
     </h2>
-    <form method="post" action="{% url 'edit-groups' application=application %}">
+    <form method="post" action="{% url 'edit-rollen' application=application %}">
         {% csrf_token %}
         {{ groupsform.management_form }}
         <table>
             <tr>
-                <th>Groep</th>
+                <th>Rol</th>
                 <th>Verwijder</th>
             </tr>
             {% for group in groupsform %}
@@ -18,10 +18,10 @@
                 <td>{{ group.DELETE.as_widget }}</td>
                 </tr>
             {% endfor %}
-        
+
         </table>
         <input class="gwknop" type="submit" value="Werk bij">
     </form>
-    
+
 
 {% endblock %}
