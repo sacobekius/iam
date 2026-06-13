@@ -13,7 +13,8 @@ class CustomOAuth2Validator(OAuth2Validator):
         claims = super().get_userinfo_claims(request)
         claims['preferred_username'] = request.user.email
         claims['email'] = request.user.email
-        claims['givenName'] = request.user.first_name,
-        claims['surname'] = request.user.last_name,
-        claims['displayName'] = ' '.join([request.user.first_name, request.user.last_name]),
+        claims['givenName'] = request.user.first_name
+        claims['surname'] = request.user.last_name
+        claims['displayName'] = ' '.join([request.user.first_name, request.user.last_name])
+        claims['groups'] = list(request.user.groups.values_list('name', flat=True))
         return claims

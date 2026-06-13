@@ -1,3 +1,10 @@
+import base64
+import json
+import secrets
+import urllib.parse
+
+import requests as http_requests
+from django.conf import settings
 from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.auth.mixins import PermissionRequiredMixin, AccessMixin
 from django.db import transaction
@@ -283,6 +290,66 @@ class GroupView(PermissionRequiredMixin, View):
     permission_required = 'staff'
     def get(self, *args, **kwargs):
         return render(self.request, 'users/group.html')
+
+
+def test_login(request):
+    state = secrets.token_urlsafe(16)
+    request.session['oauth_state'] = state
+    params = {
+        'response_type': 'code',
+        'client_id': settings.TEST_CLIENT_ID,
+        'redirect_uri': request.build_absolute_uri('/test/callback/'),
+        'scope': 'openid profile User.Read',
+        'state': state,
+    }
+    return HttpResponseRedirect('/o/authorize/?' + urllib.parse.urlencode(params))
+
+
+def test_callback(request):
+    error = request.GET.get('error')
+    if error:
+        return render(request, 'users/test_attributes.html', {'error': error})
+
+    if request.GET.get('state') != request.session.get('oauth_state'):
+        return render(request, 'users/test_attributes.html', {'error': 'Invalid state parameter'})
+
+    token_response = http_requests.post(
+        request.build_absolute_uri('/o/token/'),
+        data={
+            'grant_type': 'authorization_code',
+            'code': request.GET.get('code'),
+            'redirect_uri': request.build_absolute_uri('/test/callback/'),
+            'client_id': settings.TEST_CLIENT_ID,
+            'client_secret': settings.TEST_CLIENT_SECRET,
+        },
+    )
+    if not token_response.ok:
+        return render(request, 'users/test_attributes.html', {'error': token_response.text})
+
+    tokens = token_response.json()
+
+    id_token_claims = {}
+    if 'id_token' in tokens:
+        try:
+            payload = tokens['id_token'].split('.')[1]
+            payload += '=' * (-len(payload) % 4)
+            id_token_claims = json.loads(base64.b64decode(payload))
+        except Exception:
+            pass
+
+    userinfo = {}
+    userinfo_response = http_requests.get(
+        request.build_absolute_uri('/o/userinfo/'),
+        headers={'Authorization': f'Bearer {tokens["access_token"]}'},
+    )
+    if userinfo_response.ok:
+        userinfo = userinfo_response.json()
+
+    return render(request, 'users/test_attributes.html', {
+        'granted_scopes': tokens.get('scope', '').split(),
+        'id_token_claims': id_token_claims,
+        'userinfo': userinfo,
+    })
 
 
 class AppPasswordView(PermissionRequiredMixin, View):
