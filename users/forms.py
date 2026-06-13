@@ -1,4 +1,5 @@
 from django import forms
+from django.contrib.auth.models import Group
 
 from oauth2_provider.models import Application
 from users.models import User, Rol
@@ -60,3 +61,24 @@ class UserForm(forms.ModelForm):
     def save(self, commit=True):
         self.instance.locusername = self.cleaned_data['locusername']
         return super(UserForm, self).save(commit)
+
+
+class GroepForm(forms.ModelForm):
+    class Meta:
+        model = Group
+        fields = ('name',)
+
+
+class GroepMembersForm(forms.Form):
+    gebruikers = forms.ModelMultipleChoiceField(
+        queryset=User.objects.filter(is_active=True).order_by('application__name', 'username'),
+        widget=forms.CheckboxSelectMultiple({'class': 'user-group-checkbox'}),
+        required=False,
+        label='Gebruikers',
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['gebruikers'].label_from_instance = lambda u: (
+            f'{u.locusername} ({u.application.name})' if u.application else u.username
+        )

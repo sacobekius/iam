@@ -23,6 +23,11 @@
                     <input class="gwknop" type="submit" value="Rollen">
                 </form>
             </td>
+            <td>
+                <form method="get" action="{% url 'groepen-list' %}">
+                    <input class="gwknop" type="submit" value="Groepen">
+                </form>
+            </td>
             {% if is_staff %}
             <td>
                 <form method="get" action="{% url 'set-app-password' application=application.name %}">

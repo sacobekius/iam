@@ -6,7 +6,7 @@ import urllib.parse
 import requests as http_requests
 from django.conf import settings
 from django.contrib.admin.views.decorators import staff_member_required
-from django.contrib.auth.mixins import PermissionRequiredMixin, AccessMixin
+from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin, AccessMixin
 from django.db import transaction
 from django.contrib.auth.hashers import check_password, is_password_usable, make_password
 from django.http import HttpResponse, HttpResponseNotFound, HttpResponseRedirect, JsonResponse, \
@@ -17,7 +17,10 @@ from django.shortcuts import render, reverse
 from django.views import View
 
 from oauth2_provider.models import Application
-from users.forms import UserForm, RollenFormSet, ApplicationForm
+from django.contrib.auth.models import Group
+from django.shortcuts import get_object_or_404
+
+from users.forms import UserForm, RollenFormSet, ApplicationForm, GroepForm, GroepMembersForm
 from users.models import User, Rol, ApplicatieSleutel, SyncPoint
 
 from users.scimcomm import *
@@ -286,10 +289,54 @@ def edit_rollen(request, *args, **kwargs):
     })
 
 
-class GroupView(PermissionRequiredMixin, View):
-    permission_required = 'staff'
-    def get(self, *args, **kwargs):
-        return render(self.request, 'users/group.html')
+@login_required(login_url='accounts/login')
+def groepen_list(request):
+    if request.method == 'POST':
+        form = GroepForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return HttpResponseRedirect(reverse('groepen-list'))
+    else:
+        form = GroepForm()
+    return render(request, 'users/groepen.html', {
+        'groepen': Group.objects.all().order_by('name'),
+        'form': form,
+    })
+
+
+class GroepView(LoginRequiredMixin, View):
+    login_url = 'accounts/login'
+
+    def get(self, request, groupid):
+        groep = get_object_or_404(Group, id=groupid)
+        naam_form = GroepForm(instance=groep)
+        members_form = GroepMembersForm(initial={'gebruikers': groep.user_set.all()})
+        return render(request, 'users/groep.html', {
+            'groep': groep,
+            'naam_form': naam_form,
+            'members_form': members_form,
+        })
+
+    def post(self, request, groupid):
+        groep = get_object_or_404(Group, id=groupid)
+        naam_form = GroepForm(request.POST, instance=groep)
+        members_form = GroepMembersForm(request.POST)
+        if naam_form.is_valid() and members_form.is_valid():
+            naam_form.save()
+            groep.user_set.set(members_form.cleaned_data['gebruikers'])
+            return HttpResponseRedirect(reverse('groep-detail', args=(groupid,)))
+        return render(request, 'users/groep.html', {
+            'groep': groep,
+            'naam_form': naam_form,
+            'members_form': members_form,
+        })
+
+
+@login_required(login_url='accounts/login')
+def delete_groep(request, groupid):
+    groep = get_object_or_404(Group, id=groupid)
+    groep.delete()
+    return HttpResponseRedirect(reverse('groepen-list'))
 
 
 def test_login(request):

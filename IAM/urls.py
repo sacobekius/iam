@@ -19,9 +19,9 @@ from django.urls import include, path
 from oauth2_provider import urls as oauth2_urls
 from oauth2_provider.views import ConnectDiscoveryInfoView, RPInitiatedLogoutView
 
-from users.views import (iam_root, LoginView, list_users, UserView, edit_rollen, GroupView,
-                         new_user, delete_user, AppPasswordView, edit_application, new_application,
-                         delete_application, test_login, test_callback)
+from users.views import (iam_root, LoginView, list_users, UserView, edit_rollen, GroepView,
+                         groepen_list, delete_groep, new_user, delete_user, AppPasswordView,
+                         edit_application, new_application, delete_application, test_login, test_callback)
 
 urlpatterns = [
     path('', iam_root, name='iam-root'),
@@ -42,7 +42,9 @@ urlpatterns = [
     path('users/<int:userid>/delete/', delete_user, name='user-delete'),
     path('<str:application>/rollen/', edit_rollen, name='edit-rollen'),
     path('<str:application>/password/', AppPasswordView.as_view(), name='set-app-password'),
-    path('groups/<int:groupid>/', GroupView.as_view(), name='group-detail'),
+    path('groepen/', groepen_list, name='groepen-list'),
+    path('groepen/<int:groupid>/', GroepView.as_view(), name='groep-detail'),
+    path('groepen/<int:groupid>/delete/', delete_groep, name='groep-delete'),
     path('application/new/', new_application, name='new-application'),
     path('application/<str:application>/', edit_application, name='edit-application'),
     path('application/<str:application>/delete/', delete_application, name='delete-application'),

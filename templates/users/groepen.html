@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h2>Groepen</h2>
+
+<table>
+    <tr>
+        <th>Naam</th>
+        <th></th>
+        <th></th>
+    </tr>
+    {% for groep in groepen %}
+    <tr>
+        <td><a href="{% url 'groep-detail' groupid=groep.id %}">{{ groep.name }}</a></td>
+        <td>{{ groep.user_set.count }} gebruiker(s)</td>
+        <td>
+            <form method="post" action="{% url 'groep-delete' groupid=groep.id %}">
+                {% csrf_token %}
+                <input class="gwknop" type="submit" value="Verwijder">
+            </form>
+        </td>
+    </tr>
+    {% empty %}
+    <tr><td colspan="3"><em>Nog geen groepen aangemaakt.</em></td></tr>
+    {% endfor %}
+</table>
+
+<br/>
+<h3>Nieuwe groep</h3>
+<form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <input class="gwknop" type="submit" value="Aanmaken">
+</form>
+{% endblock %}

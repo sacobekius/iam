@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h2>Groep: {{ groep.name }}</h2>
+
+<form method="post">
+    {% csrf_token %}
+
+    <h3>Naam</h3>
+    {{ naam_form.as_p }}
+
+    <h3>Gebruikers</h3>
+    {{ members_form.gebruikers }}
+
+    <br/><br/>
+    <input class="gwknop" type="submit" value="Opslaan">
+</form>
+
+<br/>
+<form method="post" action="{% url 'groep-delete' groupid=groep.id %}">
+    {% csrf_token %}
+    <input class="gwknop" type="submit" value="Verwijder groep">
+</form>
+{% endblock %}
