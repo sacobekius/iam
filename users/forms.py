@@ -39,13 +39,17 @@ class UserForm(forms.ModelForm):
 
     class Meta:
         model = User
-        fields = ('locusername', 'personeelsnummer', 'email', 'rollen',)
+        fields = ('locusername', 'personeelsnummer', 'email', 'rollen', 'groups',)
         widgets = {
             'rollen': forms.CheckboxSelectMultiple({'class': 'user-group-checkbox'}),
+            'groups': forms.CheckboxSelectMultiple({'class': 'user-group-checkbox'}),
         }
         help_texts = {
             'username': None,
             'groups': None,
+        }
+        labels = {
+            'groups': 'Groepen',
         }
 
     def __init__(self, *args, **kwargs):
