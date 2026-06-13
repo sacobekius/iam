@@ -326,9 +326,9 @@ def test_callback(request):
     if not token_response.ok:
         try:
             err = token_response.json()
+            return render(request, 'users/test_attributes.html', {'error': err})
         except ValueError:
-            err = f'HTTP {token_response.status_code} {token_response.reason}'
-        return render(request, 'users/test_attributes.html', {'error': err})
+            return HttpResponse(token_response.text, status=token_response.status_code, content_type='text/html')
 
     tokens = token_response.json()
 
@@ -353,7 +353,7 @@ def test_callback(request):
         try:
             userinfo_error = userinfo_response.json()
         except ValueError:
-            userinfo_error = f'HTTP {userinfo_response.status_code} {userinfo_response.reason}'
+            return HttpResponse(userinfo_response.text, status=userinfo_response.status_code, content_type='text/html')
 
     return render(request, 'users/test_attributes.html', {
         'granted_scopes': tokens.get('scope', '').split(),
