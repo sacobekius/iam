@@ -6,6 +6,9 @@
         <input class="gwknop" type="submit" value="Admin site">
     </form>
     {% endif %}
+    <form method="get" action="{% url 'groepen-list' %}">
+        <input class="gwknop" type="submit" value="Groepen">
+    </form>
     <br/><br/>
     <table>
     {% for application in applications %}
@@ -23,12 +26,7 @@
                     <input class="gwknop" type="submit" value="Rollen">
                 </form>
             </td>
-            <td>
-                <form method="get" action="{% url 'groepen-list' %}">
-                    <input class="gwknop" type="submit" value="Groepen">
-                </form>
-            </td>
-            {% if is_staff %}
+{% if is_staff %}
             <td>
                 <form method="get" action="{% url 'set-app-password' application=application.name %}">
                     <input class="gwknop" type="submit" value="Wachtwoord">
