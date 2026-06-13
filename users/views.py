@@ -324,7 +324,11 @@ def test_callback(request):
         },
     )
     if not token_response.ok:
-        return render(request, 'users/test_attributes.html', {'error': token_response.text})
+        try:
+            err = token_response.json()
+        except ValueError:
+            err = f'HTTP {token_response.status_code} {token_response.reason}'
+        return render(request, 'users/test_attributes.html', {'error': err})
 
     tokens = token_response.json()
 
@@ -338,17 +342,24 @@ def test_callback(request):
             pass
 
     userinfo = {}
+    userinfo_error = None
     userinfo_response = http_requests.get(
         request.build_absolute_uri('/o/userinfo/'),
         headers={'Authorization': f'Bearer {tokens["access_token"]}'},
     )
     if userinfo_response.ok:
         userinfo = userinfo_response.json()
+    else:
+        try:
+            userinfo_error = userinfo_response.json()
+        except ValueError:
+            userinfo_error = f'HTTP {userinfo_response.status_code} {userinfo_response.reason}'
 
     return render(request, 'users/test_attributes.html', {
         'granted_scopes': tokens.get('scope', '').split(),
         'id_token_claims': id_token_claims,
         'userinfo': userinfo,
+        'userinfo_error': userinfo_error,
     })
 
 
