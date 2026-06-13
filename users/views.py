@@ -237,6 +237,7 @@ def edit_application(request, *args, **kwargs):
             hash_client_secret=False,
             authorization_grant_type=Application.GRANT_OPENID_HYBRID,
             client_type=Application.CLIENT_CONFIDENTIAL,
+            algorithm='RS256',
         )
     try:
         syncpoint = application.application_syncpoint
