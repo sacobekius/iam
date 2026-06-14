@@ -21,7 +21,9 @@ from oauth2_provider.views import ConnectDiscoveryInfoView, RPInitiatedLogoutVie
 
 from users.views import (iam_root, LoginView, list_users, UserView, edit_rollen, GroepView,
                          groepen_list, delete_groep, new_user, delete_user, AppPasswordView,
-                         edit_application, new_application, delete_application, test_login, test_callback)
+                         edit_application, new_application, delete_application,
+                         test_login, test_callback,
+                         test_hybrid_login, test_hybrid_callback, test_hybrid_process)
 
 urlpatterns = [
     path('', iam_root, name='iam-root'),
@@ -50,4 +52,7 @@ urlpatterns = [
     path('application/<str:application>/delete/', delete_application, name='delete-application'),
     path('test/login/', test_login, name='test-login'),
     path('test/callback/', test_callback, name='test-callback'),
+    path('test/hybrid/login/', test_hybrid_login, name='test-hybrid-login'),
+    path('test/hybrid/callback/', test_hybrid_callback, name='test-hybrid-callback'),
+    path('test/hybrid/process/', test_hybrid_process, name='test-hybrid-process'),
 ]

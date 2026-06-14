@@ -340,6 +340,96 @@ def delete_groep(request, groupid):
     return HttpResponseRedirect(reverse('groepen-list'))
 
 
+def test_hybrid_login(request):
+    state = secrets.token_urlsafe(16)
+    nonce = secrets.token_urlsafe(16)
+    request.session['hybrid_state'] = state
+    request.session['hybrid_nonce'] = nonce
+    params = {
+        'response_type': 'code id_token',
+        'client_id': settings.TEST_HYBRID_CLIENT_ID,
+        'redirect_uri': request.build_absolute_uri('/test/hybrid/callback/'),
+        'scope': 'openid profile User.Read',
+        'state': state,
+        'nonce': nonce,
+    }
+    return HttpResponseRedirect('/o/authorize/?' + urllib.parse.urlencode(params))
+
+
+def test_hybrid_callback(request):
+    return render(request, 'users/test_hybrid_callback.html')
+
+
+def test_hybrid_process(request):
+    if request.method != 'POST':
+        return HttpResponseNotAllowed(['POST'])
+
+    if request.POST.get('state') != request.session.get('hybrid_state'):
+        return render(request, 'users/test_hybrid_attributes.html', {'error': 'Invalid state'})
+
+    code = request.POST.get('code')
+    front_id_token = request.POST.get('id_token', '')
+
+    front_id_token_claims = {}
+    if front_id_token:
+        try:
+            payload = front_id_token.split('.')[1]
+            payload += '=' * (-len(payload) % 4)
+            front_id_token_claims = json.loads(base64.b64decode(payload))
+        except Exception:
+            pass
+
+    token_response = http_requests.post(
+        request.build_absolute_uri('/o/token/'),
+        data={
+            'grant_type': 'authorization_code',
+            'code': code,
+            'redirect_uri': request.build_absolute_uri('/test/hybrid/callback/'),
+            'client_id': settings.TEST_HYBRID_CLIENT_ID,
+            'client_secret': settings.TEST_HYBRID_CLIENT_SECRET,
+        },
+    )
+    if not token_response.ok:
+        try:
+            err = token_response.json()
+        except ValueError:
+            return HttpResponse(token_response.text, status=token_response.status_code, content_type='text/html')
+        return render(request, 'users/test_hybrid_attributes.html', {'error': err})
+
+    tokens = token_response.json()
+
+    back_id_token_claims = {}
+    if 'id_token' in tokens:
+        try:
+            payload = tokens['id_token'].split('.')[1]
+            payload += '=' * (-len(payload) % 4)
+            back_id_token_claims = json.loads(base64.b64decode(payload))
+        except Exception:
+            pass
+
+    userinfo = {}
+    userinfo_error = None
+    userinfo_response = http_requests.get(
+        request.build_absolute_uri('/o/userinfo/'),
+        headers={'Authorization': f'Bearer {tokens["access_token"]}'},
+    )
+    if userinfo_response.ok:
+        userinfo = userinfo_response.json()
+    else:
+        try:
+            userinfo_error = userinfo_response.json()
+        except ValueError:
+            return HttpResponse(userinfo_response.text, status=userinfo_response.status_code, content_type='text/html')
+
+    return render(request, 'users/test_hybrid_attributes.html', {
+        'granted_scopes': tokens.get('scope', '').split(),
+        'front_id_token_claims': front_id_token_claims,
+        'back_id_token_claims': back_id_token_claims,
+        'userinfo': userinfo,
+        'userinfo_error': userinfo_error,
+    })
+
+
 def test_login(request):
     state = secrets.token_urlsafe(16)
     request.session['oauth_state'] = state

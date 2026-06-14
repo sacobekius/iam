@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h2>Hybrid flow — verwerken...</h2>
+<p id="status">Fragment uitlezen en doorsturen...</p>
+
+<form id="hybrid-form" method="post" action="{% url 'test-hybrid-process' %}">
+    {% csrf_token %}
+    <input type="hidden" name="code" id="code-input">
+    <input type="hidden" name="state" id="state-input">
+    <input type="hidden" name="id_token" id="id-token-input">
+</form>
+
+<script>
+    const params = new URLSearchParams(window.location.hash.substring(1));
+    const code = params.get('code');
+    if (code) {
+        document.getElementById('code-input').value = code;
+        document.getElementById('state-input').value = params.get('state') || '';
+        document.getElementById('id-token-input').value = params.get('id_token') || '';
+        document.getElementById('hybrid-form').submit();
+    } else {
+        document.getElementById('status').textContent =
+            'Geen code gevonden in het fragment: ' + window.location.hash;
+    }
+</script>
+{% endblock %}

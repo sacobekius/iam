@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h2>OpenID Hybrid Flow — Test</h2>
+
+{% if error %}
+    <p style="color:red"><strong>Fout:</strong> {{ error }}</p>
+{% else %}
+
+<h3>Granted scopes</h3>
+<table>
+    {% for scope in granted_scopes %}
+    <tr><td>{{ scope }}</td></tr>
+    {% empty %}
+    <tr><td><em>(geen)</em></td></tr>
+    {% endfor %}
+</table>
+
+<h3>ID-token (front-channel, uit redirect)</h3>
+<table>
+    {% for key, value in front_id_token_claims.items %}
+    <tr>
+        <td><strong>{{ key }}</strong></td>
+        <td>{{ value }}</td>
+    </tr>
+    {% empty %}
+    <tr><td colspan="2"><em>(niet ontvangen)</em></td></tr>
+    {% endfor %}
+</table>
+
+<h3>ID-token (back-channel, uit token-endpoint)</h3>
+<table>
+    {% for key, value in back_id_token_claims.items %}
+    <tr>
+        <td><strong>{{ key }}</strong></td>
+        <td>{{ value }}</td>
+    </tr>
+    {% empty %}
+    <tr><td colspan="2"><em>(niet ontvangen)</em></td></tr>
+    {% endfor %}
+</table>
+
+<h3>Profiel (userinfo)</h3>
+{% if userinfo_error %}<p style="color:red"><strong>Userinfo fout:</strong> {{ userinfo_error }}</p>{% endif %}
+<table>
+    {% for key, value in userinfo.items %}
+    {% if key != "groups" %}
+    <tr>
+        <td><strong>{{ key }}</strong></td>
+        <td>{{ value }}</td>
+    </tr>
+    {% endif %}
+    {% empty %}
+    <tr><td colspan="2"><em>(leeg)</em></td></tr>
+    {% endfor %}
+</table>
+
+<h3>Rollen</h3>
+<table>
+    {% for group in userinfo.groups %}
+    <tr><td>{{ group }}</td></tr>
+    {% empty %}
+    <tr><td><em>(geen rollen)</em></td></tr>
+    {% endfor %}
+</table>
+
+{% endif %}
+
+<br/>
+<form method="get" action="{% url 'test-hybrid-login' %}">
+    <input class="gwknop" type="submit" value="Opnieuw inloggen">
+</form>
+{% endblock %}
