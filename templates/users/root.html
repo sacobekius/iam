@@ -27,9 +27,7 @@
                 </form>
             </td>
             <td>
-                <form method="get" action="{% url 'test-authcode-login' application=application.name %}">
-                    <input class="gwknop" type="submit" value="Test">
-                </form>
+                <button class="gwknop" onclick="kopieerTestUrl('{{ application.name }}', this)">Test URL</button>
             </td>
 {% if is_staff %}
             <td>
@@ -51,4 +49,15 @@
             </td>
         </tr>
     </table>
+
+<script>
+function kopieerTestUrl(application, btn) {
+    const url = window.location.origin + '/test/authcode/' + application + '/login/';
+    navigator.clipboard.writeText(url).then(function() {
+        var orig = btn.textContent;
+        btn.textContent = 'Gekopieerd!';
+        setTimeout(function() { btn.textContent = orig; }, 2000);
+    });
+}
+</script>
 {% endblock %}
