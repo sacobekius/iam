@@ -430,35 +430,50 @@ def test_hybrid_process(request):
     })
 
 
-def test_login(request):
+def test_authcode_login(request, application):
+    try:
+        app = Application.objects.get(name=application)
+    except Application.DoesNotExist:
+        return HttpResponseNotFound('Applicatie niet gevonden')
+
+    redirect_uri = request.build_absolute_uri('/test/authcode/callback/')
+    if redirect_uri not in app.redirect_uris:
+        app.redirect_uris = (app.redirect_uris + '\n' + redirect_uri).strip()
+        app.save()
+
     state = secrets.token_urlsafe(16)
-    request.session['oauth_state'] = state
+    request.session['authcode_state'] = state
+    request.session['authcode_client_id'] = app.client_id
+    request.session['authcode_client_secret'] = app.client_secret
+    request.session['authcode_application'] = application
+
     params = {
         'response_type': 'code',
-        'client_id': settings.TEST_CLIENT_ID,
-        'redirect_uri': request.build_absolute_uri('/test/callback/'),
+        'client_id': app.client_id,
+        'redirect_uri': redirect_uri,
         'scope': 'openid profile User.Read',
         'state': state,
     }
     return HttpResponseRedirect('/o/authorize/?' + urllib.parse.urlencode(params))
 
 
-def test_callback(request):
+def test_authcode_callback(request):
     error = request.GET.get('error')
     if error:
         return render(request, 'users/test_attributes.html', {'error': error})
 
-    if request.GET.get('state') != request.session.get('oauth_state'):
+    if request.GET.get('state') != request.session.get('authcode_state'):
         return render(request, 'users/test_attributes.html', {'error': 'Invalid state parameter'})
 
+    redirect_uri = request.build_absolute_uri('/test/authcode/callback/')
     token_response = http_requests.post(
         request.build_absolute_uri('/o/token/'),
         data={
             'grant_type': 'authorization_code',
             'code': request.GET.get('code'),
-            'redirect_uri': request.build_absolute_uri('/test/callback/'),
-            'client_id': settings.TEST_CLIENT_ID,
-            'client_secret': settings.TEST_CLIENT_SECRET,
+            'redirect_uri': redirect_uri,
+            'client_id': request.session.get('authcode_client_id'),
+            'client_secret': request.session.get('authcode_client_secret'),
         },
     )
     if not token_response.ok:
@@ -494,6 +509,7 @@ def test_callback(request):
             return HttpResponse(userinfo_response.text, status=userinfo_response.status_code, content_type='text/html')
 
     return render(request, 'users/test_attributes.html', {
+        'application': request.session.get('authcode_application'),
         'granted_scopes': tokens.get('scope', '').split(),
         'id_token_claims': id_token_claims,
         'userinfo': userinfo,

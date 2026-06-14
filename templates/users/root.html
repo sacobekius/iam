@@ -26,6 +26,11 @@
                     <input class="gwknop" type="submit" value="Rollen">
                 </form>
             </td>
+            <td>
+                <form method="get" action="{% url 'test-authcode-login' application=application.name %}">
+                    <input class="gwknop" type="submit" value="Test">
+                </form>
+            </td>
 {% if is_staff %}
             <td>
                 <form method="get" action="{% url 'set-app-password' application=application.name %}">
