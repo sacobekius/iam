@@ -357,6 +357,9 @@ def test_hybrid_login(request):
 
 
 def test_hybrid_callback(request):
+    error = request.GET.get('error')
+    if error:
+        return render(request, 'users/test_hybrid_attributes.html', {'error': error})
     return render(request, 'users/test_hybrid_callback.html')
 
 
