@@ -52,7 +52,7 @@ urlpatterns = [
     path('application/<str:application>/delete/', delete_application, name='delete-application'),
     path('test/authcode/<str:application>/login/', test_authcode_login, name='test-authcode-login'),
     path('test/authcode/callback/', test_authcode_callback, name='test-authcode-callback'),
-    path('test/hybrid/login/', test_hybrid_login, name='test-hybrid-login'),
+    path('test/hybrid/<str:application>/login/', test_hybrid_login, name='test-hybrid-login'),
     path('test/hybrid/callback/', test_hybrid_callback, name='test-hybrid-callback'),
     path('test/hybrid/process/', test_hybrid_process, name='test-hybrid-process'),
 ]

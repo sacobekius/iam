@@ -27,7 +27,7 @@
                 </form>
             </td>
             <td>
-                <button class="gwknop" onclick="kopieerTestUrl('{{ application.name }}', this)">Test URL</button>
+                <button class="gwknop" onclick="kopieerTestUrl('{{ application.name }}', '{{ application.grant_type }}', this)">Test URL</button>
             </td>
 {% if is_staff %}
             <td>
@@ -51,8 +51,11 @@
     </table>
 
 <script>
-function kopieerTestUrl(application, btn) {
-    const url = window.location.origin + '/test/authcode/' + application + '/login/';
+function kopieerTestUrl(application, grantType, btn) {
+    var path = grantType === 'openid-hybrid'
+        ? '/test/hybrid/' + application + '/login/'
+        : '/test/authcode/' + application + '/login/';
+    var url = window.location.origin + path;
     navigator.clipboard.writeText(url).then(function() {
         var orig = btn.textContent;
         btn.textContent = 'Gekopieerd!';

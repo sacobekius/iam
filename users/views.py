@@ -31,7 +31,10 @@ from urllib import parse
 def iam_root(request):
     applications = []
     for application in Application.objects.all():
-        applications.append({'name': application.name})
+        applications.append({
+            'name': application.name,
+            'grant_type': application.authorization_grant_type,
+        })
     return render(request, 'users/root.html', {
         'applications': applications,
         'is_staff': request.user.is_staff,
@@ -340,15 +343,29 @@ def delete_groep(request, groupid):
     return HttpResponseRedirect(reverse('groepen-list'))
 
 
-def test_hybrid_login(request):
+def test_hybrid_login(request, application):
+    try:
+        app = Application.objects.get(name=application)
+    except Application.DoesNotExist:
+        return HttpResponseNotFound('Applicatie niet gevonden')
+
+    redirect_uri = request.build_absolute_uri('/test/hybrid/callback/')
+    if redirect_uri not in app.redirect_uris:
+        app.redirect_uris = (app.redirect_uris + '\n' + redirect_uri).strip()
+        app.save()
+
     state = secrets.token_urlsafe(16)
     nonce = secrets.token_urlsafe(16)
     request.session['hybrid_state'] = state
     request.session['hybrid_nonce'] = nonce
+    request.session['hybrid_client_id'] = app.client_id
+    request.session['hybrid_client_secret'] = app.client_secret
+    request.session['hybrid_application'] = application
+
     params = {
         'response_type': 'code id_token',
-        'client_id': settings.TEST_HYBRID_CLIENT_ID,
-        'redirect_uri': request.build_absolute_uri('/test/hybrid/callback/'),
+        'client_id': app.client_id,
+        'redirect_uri': redirect_uri,
         'scope': 'openid profile User.Read',
         'state': state,
         'nonce': nonce,
@@ -388,8 +405,8 @@ def test_hybrid_process(request):
             'grant_type': 'authorization_code',
             'code': code,
             'redirect_uri': request.build_absolute_uri('/test/hybrid/callback/'),
-            'client_id': settings.TEST_HYBRID_CLIENT_ID,
-            'client_secret': settings.TEST_HYBRID_CLIENT_SECRET,
+            'client_id': request.session.get('hybrid_client_id'),
+            'client_secret': request.session.get('hybrid_client_secret'),
         },
     )
     if not token_response.ok:
@@ -425,6 +442,7 @@ def test_hybrid_process(request):
             return HttpResponse(userinfo_response.text, status=userinfo_response.status_code, content_type='text/html')
 
     return render(request, 'users/test_hybrid_attributes.html', {
+        'application': request.session.get('hybrid_application'),
         'granted_scopes': tokens.get('scope', '').split(),
         'front_id_token_claims': front_id_token_claims,
         'back_id_token_claims': back_id_token_claims,

@@ -67,7 +67,9 @@
 {% endif %}
 
 <br/>
-<form method="get" action="{% url 'test-hybrid-login' %}">
+{% if application %}
+<form method="get" action="{% url 'test-hybrid-login' application=application %}">
     <input class="gwknop" type="submit" value="Opnieuw inloggen">
 </form>
+{% endif %}
 {% endblock %}
