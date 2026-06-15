@@ -23,7 +23,7 @@ from users.views import (iam_root, LoginView, list_users, UserView, edit_rollen,
                          groepen_list, delete_groep, new_user, delete_user, AppPasswordView,
                          edit_application, new_application, delete_application,
                          test_authcode_login, test_authcode_callback,
-                         test_hybrid_login, test_hybrid_callback, test_hybrid_process)
+                         test_hybrid_login, test_hybrid_callback)
 
 urlpatterns = [
     path('', iam_root, name='iam-root'),
@@ -54,5 +54,4 @@ urlpatterns = [
     path('test/authcode/callback/', test_authcode_callback, name='test-authcode-callback'),
     path('test/hybrid/<str:application>/login/', test_hybrid_login, name='test-hybrid-login'),
     path('test/hybrid/callback/', test_hybrid_callback, name='test-hybrid-callback'),
-    path('test/hybrid/process/', test_hybrid_process, name='test-hybrid-process'),
 ]

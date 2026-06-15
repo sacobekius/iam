@@ -13,6 +13,7 @@ from django.http import HttpResponse, HttpResponseNotFound, HttpResponseRedirect
     HttpResponseNotAllowed, HttpResponseServerError
 from django.contrib.auth import logout, login
 from django.contrib.auth.decorators import login_required
+from django.views.decorators.csrf import csrf_exempt
 from django.shortcuts import render, reverse
 from django.views import View
 
@@ -364,6 +365,7 @@ def test_hybrid_login(request, application):
 
     params = {
         'response_type': 'code id_token',
+        'response_mode': 'form_post',
         'client_id': app.client_id,
         'redirect_uri': redirect_uri,
         'scope': 'openid profile User.Read',
@@ -373,16 +375,12 @@ def test_hybrid_login(request, application):
     return HttpResponseRedirect('/o/authorize/?' + urllib.parse.urlencode(params))
 
 
+@csrf_exempt
 def test_hybrid_callback(request):
-    error = request.GET.get('error')
-    if error:
-        return render(request, 'users/test_hybrid_attributes.html', {'error': error})
-    return render(request, 'users/test_hybrid_callback.html')
-
-
-def test_hybrid_process(request):
-    if request.method != 'POST':
-        return HttpResponseNotAllowed(['POST'])
+    # Fouten komen als query parameters (GET), succes via form_post (POST)
+    if request.method == 'GET':
+        error = request.GET.get('error')
+        return render(request, 'users/test_hybrid_attributes.html', {'error': error or 'Onverwacht GET-verzoek'})
 
     if request.POST.get('state') != request.session.get('hybrid_state'):
         return render(request, 'users/test_hybrid_attributes.html', {'error': 'Invalid state'})
