@@ -427,6 +427,15 @@ def test_hybrid_process(request):
         except Exception:
             pass
 
+    access_token_claims = {}
+    if 'access_token' in tokens:
+        try:
+            payload = tokens['access_token'].split('.')[1]
+            payload += '=' * (-len(payload) % 4)
+            access_token_claims = json.loads(base64.b64decode(payload))
+        except Exception:
+            pass
+
     userinfo = {}
     userinfo_error = None
     userinfo_response = http_requests.get(
@@ -446,6 +455,7 @@ def test_hybrid_process(request):
         'granted_scopes': tokens.get('scope', '').split(),
         'front_id_token_claims': front_id_token_claims,
         'back_id_token_claims': back_id_token_claims,
+        'access_token_claims': access_token_claims,
         'userinfo': userinfo,
         'userinfo_error': userinfo_error,
     })
@@ -515,6 +525,15 @@ def test_authcode_callback(request):
         except Exception:
             pass
 
+    access_token_claims = {}
+    if 'access_token' in tokens:
+        try:
+            payload = tokens['access_token'].split('.')[1]
+            payload += '=' * (-len(payload) % 4)
+            access_token_claims = json.loads(base64.b64decode(payload))
+        except Exception:
+            pass
+
     userinfo = {}
     userinfo_error = None
     userinfo_response = http_requests.get(
@@ -533,6 +552,7 @@ def test_authcode_callback(request):
         'application': request.session.get('authcode_application'),
         'granted_scopes': tokens.get('scope', '').split(),
         'id_token_claims': id_token_claims,
+        'access_token_claims': access_token_claims,
         'userinfo': userinfo,
         'userinfo_error': userinfo_error,
     })

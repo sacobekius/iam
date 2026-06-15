@@ -40,6 +40,27 @@
     {% endfor %}
 </table>
 
+<h3>Access token claims</h3>
+{% if access_token_claims %}
+<table>
+    <tr><td><strong>aud</strong></td><td>{{ access_token_claims.aud }} <em style="color:#666">(= client_id van de applicatie)</em></td></tr>
+    <tr><td><strong>scp</strong></td><td>{{ access_token_claims.scp }}</td></tr>
+    {% if access_token_claims.roles %}
+    <tr><td><strong>roles</strong></td><td>{{ access_token_claims.roles }}</td></tr>
+    {% endif %}
+    {% if access_token_claims.groups %}
+    <tr><td><strong>groups</strong></td><td>{{ access_token_claims.groups }}</td></tr>
+    {% endif %}
+    {% for key, value in access_token_claims.items %}
+    {% if key != "aud" and key != "scp" and key != "roles" and key != "groups" %}
+    <tr><td><strong>{{ key }}</strong></td><td>{{ value }}</td></tr>
+    {% endif %}
+    {% endfor %}
+</table>
+{% else %}
+<p><em>Access token is opaque (geen JWT) — voeg ACCESS_TOKEN_GENERATOR toe aan settings.</em></p>
+{% endif %}
+
 <h3>ID-token claims</h3>
 <table>
     {% for key, value in id_token_claims.items %}
