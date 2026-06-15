@@ -31,12 +31,12 @@
     {% endfor %}
 </table>
 
-<h3>Rollen</h3>
+<h3>Groepen</h3>
 <table>
     {% for group in userinfo.groups %}
     <tr><td>{{ group }}</td></tr>
     {% empty %}
-    <tr><td><em>(geen rollen)</em></td></tr>
+    <tr><td><em>(geen groepen)</em></td></tr>
     {% endfor %}
 </table>
 
